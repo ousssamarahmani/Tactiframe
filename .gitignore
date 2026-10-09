@@ -1,0 +1,56 @@
+# ── Session data & match videos ───────────────────────────────────────────────
+data/
+!data/sessions/.gitkeep
+
+# ── Model weights (raw binaries — use Git LFS or external storage instead) ───
+models/
+!models/.gitkeep
+*.pt
+*.onnx
+*.pth
+*.weights
+
+# ── Environment & secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+.aws/credentials
+.aws/config
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.so
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Testing & coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+*.xml
+
+# ── IDE / editor ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+*.dockerignore
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
