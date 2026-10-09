@@ -1,10 +1,36 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="TactiFrame" width="480" />
+  <img src="docs/assets/logo.png" alt="TactiFrame" width="520" />
 </p>
 
-# TactiFrame
+<p align="center">
+  <strong>Agentic Vision system for football opposition analysis</strong><br/>
+  Converts match video into evidence-backed tactical intelligence via a full SEE → UNDERSTAND → DECIDE → ACT pipeline
+</p>
 
-> Agentic Vision system that converts football match video into evidence-backed tactical intelligence — OpenCV AI Competition 2026 entry (Agentic Vision track with AWS).
+<p align="center">
+  <img src="https://img.shields.io/badge/OpenCV-5.x-blue?logo=opencv&logoColor=white" />
+  <img src="https://img.shields.io/badge/Amazon%20Bedrock-Claude%203.5-orange?logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/MCP-1.3-blueviolet" />
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-green" />
+</p>
+
+---
+
+## What is TactiFrame?
+
+TactiFrame is a hackathon entry for the **OpenCV AI Competition 2026 — Agentic Vision track (AWS)**.
+
+It watches a football (soccer) match clip and autonomously:
+
+1. **Detects** players and the ball with YOLO + tracks them with ByteTrack
+2. **Maps** every player to a pitch zone and **detects** tactical events (pass, shot, press, cross, set piece)
+3. **Extracts** short evidence clips for each event and uploads them to S3
+4. **Reasons** about the footage via an Amazon Bedrock agent loop — forming hypotheses, calling tools, and refining a tactical plan
+5. **Blocks** until the coach explicitly approves or rejects the plan — no automated recommendation is delivered without human sign-off
+
+The full reasoning trace (tool calls, hypothesis changes, evidence links) is serialised to JSON so judges can verify that vision outputs directly changed agent decisions.
 
 ---
 
@@ -17,13 +43,13 @@ graph TD
     end
 
     subgraph SEE["SEE — cv/"]
-        DET[detector.py<br/>YOLO ≥0.5 conf]
-        TRK[tracker.py<br/>ByteTrack IDs]
+        DET[detector.py · YOLO ≥0.5 conf]
+        TRK[tracker.py · ByteTrack IDs]
         TC[team_classifier.py]
         BI[ball_interpolation.py]
-        ZA[zones.py<br/>Zone_Analyzer]
-        ED[event_detector.py<br/>Event_Detector]
-        PL[pipeline.py<br/>orchestrates cv/ + clips + S3 upload]
+        ZA[zones.py · Zone_Analyzer]
+        ED[event_detector.py · Event_Detector]
+        PL[pipeline.py · orchestrates cv/ + clips + S3]
     end
 
     subgraph STORE["Session Store — data/sessions/{id}/"]
@@ -35,20 +61,20 @@ graph TD
     end
 
     subgraph DECIDE["DECIDE — agent/"]
-        TOOLS[tools.py<br/>Tool_Layer × 6]
-        ORCH[orchestrator.py<br/>Agent_Orchestrator]
-        TL[trace.py<br/>Trace_Logger]
+        TOOLS[tools.py · Tool_Layer × 6]
+        ORCH[orchestrator.py · Agent_Orchestrator]
+        TL[trace.py · Trace_Logger]
     end
 
     subgraph AWS
         S3[(S3_Store)]
-        BDR[Amazon Bedrock<br/>claude-3-5-sonnet]
-        AGC[AgentCore<br/>optional]
+        BDR[Amazon Bedrock · claude-3-5-sonnet]
+        AGC[AgentCore · optional]
     end
 
     subgraph ADAPTERS["Adapters"]
-        MCP[mcp/server.py<br/>MCP_Server]
-        API[api/main.py<br/>FastAPI]
+        MCP[mcp/server.py · MCP_Server]
+        API[api/main.py · FastAPI]
     end
 
     COACH[Coach / Human]
@@ -64,13 +90,32 @@ graph TD
     BDR --> AGC
     ORCH --> TL --> STORE
 
-    TOOLS --> |request_approval| COACH
-    COACH --> |approved/rejected| TOOLS
+    TOOLS -->|request_approval| COACH
+    COACH -->|approved/rejected| TOOLS
 
     MCP --> TOOLS
     API --> TOOLS
-
     ADAPTERS -.->|HTTP / stdio| COACH
+```
+
+---
+
+## Repository Structure
+
+```
+tactiframe/
+├── cv/                    # SEE phase — OpenCV 5, YOLO, ByteTrack, Zone_Analyzer, Event_Detector
+├── agent/                 # DECIDE/ACT — Tool_Layer, Agent_Orchestrator, Trace_Logger
+├── api/                   # FastAPI HTTP adapter (5 endpoints)
+├── mcp/                   # MCP server adapter (6 tools, no duplicated logic)
+├── tests/                 # pytest + Hypothesis property-based tests
+├── docs/                  # ARCHITECTURE.md, HACKATHON.md, EVAL.md, assets/
+├── aws/                   # App Runner + Lambda container deployment config
+├── config.py              # All tuneable constants (env-var overridable)
+├── run_pipeline.py        # CLI — perception only
+├── run_agent.py           # CLI — full agent loop
+├── requirements.txt       # Pinned dependencies
+└── Dockerfile             # Multi-stage container image
 ```
 
 ---
@@ -79,23 +124,23 @@ graph TD
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/<your-org>/tactiframe.git
+git clone https://github.com/ousssamarahmani/tactiframe.git
 cd tactiframe
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 2. Configure
 cp .env.example .env
 # Edit .env: S3_BUCKET, BEDROCK_MODEL_ID, AWS_REGION, YOLO_WEIGHTS_PATH
 
-# 3. Download model weights (not committed — see docs/EVAL.md)
+# 3. Download model weights (not committed to git)
 mkdir -p models
 wget -O models/yolo.pt https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt
 
-# 4. Run the perception pipeline
+# 4. Run perception pipeline
 python run_pipeline.py --video /path/to/clip.mp4
 
-# 5. Run the full agent loop
+# 5. Run full agent loop
 python run_agent.py --video /path/to/clip.mp4
 
 # 6. Run all tests (no live AWS credentials required)
@@ -107,125 +152,119 @@ pytest tests/ -v
 ## Demo Flow
 
 ```
-POST /analyse  {"video_path": "clip.mp4"}
-  → session_id: "3f2a1b9c-..."
+POST /analyse  { "video_path": "clip.mp4" }
+  → { "session_id": "3f2a1b9c-..." }
 
 GET  /events/3f2a1b9c-...
-  → 7 events: pass@4.12s, press@8.75s, shot@14.33s, ...
+  → 7 events: pass@4.12s · press@8.75s · shot@14.33s · cross@19.01s · ...
 
-# Agent loop runs automatically:
-#   Iteration 1: run_perception
-#   Iteration 2: list_events (evidence gathered)
-#   Iteration 3: analyze_zone Z05
-#   Iteration 4: draft_plan  ← evidence-first gate enforced
+# Agent loop fires automatically:
+#   step 1: run_perception  → 7 events detected
+#   step 2: list_events     → evidence gathered
+#   step 3: analyze_zone    → team_b dominates Z02 (left flank)
+#   step 4: draft_plan      → evidence-first gate enforced ✓
 
-POST /approve/3f2a1b9c-...  {"decision": "approved"}
-  → Plan delivered to coaching staff
+POST /approve/3f2a1b9c-...  { "decision": "approved" }
+  → Plan delivered to coaching staff ✓
 ```
 
 ---
 
 ## How This Meets Agentic Vision
 
-TactiFrame satisfies the Agentic Vision track criteria through four properties:
+| Criterion | TactiFrame |
+|---|---|
+| **Real computer vision** | OpenCV 5 + YOLO detects players/ball; ByteTrack gives persistent IDs; Zone_Analyzer maps positions to pitch zones |
+| **Autonomous multi-step reasoning** | Bedrock Converse loop (≤10 iterations): hypothesis → tool call → evidence evaluation → refinement |
+| **Vision-to-decision linkage** | Trace_Logger records every hypothesis change and the evidence clip that triggered it |
+| **AWS integration** | S3 (video + clips), Amazon Bedrock (reasoning), optional AgentCore (tool routing) |
+| **Human-in-the-loop** | `request_approval` blocks until the coach explicitly approves — no plan is auto-delivered |
 
-1. **Real computer vision** — OpenCV 5 + YOLO detects players and ball; ByteTrack assigns persistent IDs; Zone_Analyzer maps positions to configurable pitch zones.
-
-2. **Autonomous multi-step reasoning** — The Agent_Orchestrator drives a Bedrock Converse loop (up to 10 iterations). It forms a hypothesis, calls tools to gather evidence, updates its hypothesis based on vision outputs, and refines the plan — not a static one-shot prompt.
-
-3. **Vision-to-decision linkage** — The Trace_Logger records every reasoning step and the evidence clip that triggered each hypothesis change. Judges can verify that vision outputs directly changed agent decisions.
-
-4. **Human-in-the-loop approval** — No tactical plan reaches the coaching staff without explicit approval via the Approval_Gate. The `request_approval` tool blocks until the coach responds.
-
-### Trace Example
+### Reasoning Trace Example
 
 ```json
 {
   "session_id": "3f2a1b9c-...",
   "tool_calls": [
     {
-      "step": 1,
-      "tool_name": "run_perception",
-      "input": {"video_path": "clip.mp4"},
-      "output_summary": "7 events detected, session 3f2a1b9c-...",
+      "step": 1, "tool_name": "run_perception",
       "hypothesis_before": "",
-      "hypothesis_after": "Opponent is active in transition — 7 events in 35s"
+      "hypothesis_after": "Opponent active in transition — 7 events in 35s"
     },
     {
-      "step": 2,
-      "tool_name": "list_events",
-      "input": {"session_id": "3f2a1b9c-..."},
-      "output_summary": "pass@4.12s, press@8.75s, shot@14.33s ...",
-      "hypothesis_before": "Opponent is active in transition",
-      "hypothesis_after": "Opponent pressing high and shooting from Z05 — potential overload on left flank"
+      "step": 2, "tool_name": "list_events",
+      "hypothesis_before": "Opponent active in transition",
+      "hypothesis_after": "Opponent pressing high and shooting from Z05 — potential left-flank overload"
     },
     {
-      "step": 3,
-      "tool_name": "analyze_zone",
-      "input": {"session_id": "3f2a1b9c-...", "zone_id": "Z02"},
-      "output_summary": "dominant_team: team_b, occupancy: {team_b: 48, team_a: 12}",
-      "hypothesis_before": "Opponent overloading left flank",
-      "hypothesis_after": "Confirmed: team_b dominates Z02 (left flank) — recommend pressing trigger in Z05"
+      "step": 3, "tool_name": "analyze_zone",
+      "input": { "zone_id": "Z02" },
+      "output_summary": "dominant_team: team_b, occupancy: { team_b: 48, team_a: 12 }",
+      "hypothesis_before": "Possible left-flank overload",
+      "hypothesis_after": "Confirmed: team_b dominates Z02 — recommend pressing trigger in Z05"
     },
     {
-      "step": 4,
-      "tool_name": "draft_plan",
-      "input": {"session_id": "3f2a1b9c-...", "question": "How should we defend against this opposition?"},
-      "output_summary": "Plan drafted, referencing events evt-002 and evt-003",
-      "hypothesis_before": "Confirmed overload on left flank",
-      "hypothesis_after": "Plan complete"
+      "step": 4, "tool_name": "draft_plan",
+      "output_summary": "Plan drafted, referencing events evt-002 (press@8.75s) and evt-003 (shot@14.33s)"
     }
   ],
-  "approval": {
-    "decision": "approved",
-    "reason": "",
-    "timestamp": "2026-09-22T10:15:42Z"
-  }
+  "approval": { "decision": "approved", "reason": "", "timestamp": "2026-09-22T10:15:42Z" }
 }
 ```
 
 ---
 
-## Non-Goals
+## API Reference
 
-- **Multi-camera production analytics** — single video clip per session
-- **Chatbot-only Q&A** — TactiFrame runs real CV on real video, not static frame Q&A
-- **Real-time streaming** — pre-recorded footage only
-- **Full 90-minute match processing** — optimised for short analysis clips
-- **Player biometric identification** — tracking by bounding box + team colour only
-
-See [docs/HACKATHON.md](docs/HACKATHON.md) for the full priority table and non-goals.
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/analyse` | Submit video; returns `session_id` |
+| `GET` | `/events/{session_id}` | List all detected events |
+| `GET` | `/clip/{event_id}` | Get evidence clip path + S3 URL |
+| `POST` | `/approve/{session_id}` | Record coach approval/rejection |
+| `GET` | `/session/{session_id}` | Session metadata + plan status |
 
 ---
 
-## Repository Structure
+## Testing
 
+```bash
+# Full suite (no live AWS credentials needed — uses moto + mock.patch)
+pytest tests/ -v
+
+# Property-based tests only (Hypothesis, 100 examples each)
+pytest tests/test_cv_properties.py tests/test_tools_properties.py -v
+
+# Required trace tests (Requirement 10)
+pytest tests/test_agent_trace.py -v
 ```
-tactiframe/
-├── cv/                    # Perception layer (SEE phase)
-├── agent/                 # Decision layer (DECIDE + ACT phases)
-├── api/                   # FastAPI HTTP adapter
-├── mcp/                   # MCP server adapter
-├── tests/                 # Test suite (pytest + Hypothesis)
-├── docs/                  # Documentation
-├── aws/                   # Deployment configuration
-├── config.py              # Central configuration
-├── run_pipeline.py        # CLI entry point — perception only
-├── run_agent.py           # CLI entry point — full agent loop
-├── requirements.txt       # Pinned dependencies
-└── Dockerfile             # Container image
-```
+
+All 14 correctness properties are verified via [Hypothesis](https://hypothesis.readthedocs.io/) property-based testing.
+
+---
+
+## Non-Goals
+
+- Multi-camera production analytics
+- Chatbot-only Q&A on frozen frames
+- Real-time live-stream processing
+- Full 90-minute match processing
+- Player biometric identification
+
+See [docs/HACKATHON.md](docs/HACKATHON.md) for the full priority table.
 
 ---
 
 ## Docs
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — component descriptions and data flow
-- [docs/HACKATHON.md](docs/HACKATHON.md) — competition context, priority table, non-goals
-- [docs/EVAL.md](docs/EVAL.md) — evaluation criteria, known limitations, reproduction steps
+| Document | Description |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Component descriptions, data flow, design decisions |
+| [docs/HACKATHON.md](docs/HACKATHON.md) | Competition context, P0/P1/P2 priorities, non-goals |
+| [docs/EVAL.md](docs/EVAL.md) | Evaluation criteria, known limitations, reproduction steps |
 
 ---
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © 2026 Marouan Balha
