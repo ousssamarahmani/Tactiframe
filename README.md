@@ -1,10 +1,9 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="TactiFrame" width="520" />
+  <img src="docs/assets/logo.png" alt="TactiFrame Logo" width="340" />
 </p>
 
 <p align="center">
-  <strong>Agentic Vision system for football opposition analysis</strong><br/>
-  Converts match video into evidence-backed tactical intelligence via a full SEE → UNDERSTAND → DECIDE → ACT pipeline
+  <img src="docs/assets/banner.png" alt="TactiFrame — Agentic Vision for Football Intelligence" width="100%" />
 </p>
 
 <p align="center">
@@ -19,6 +18,7 @@
 ---
 
 ## What is TactiFrame?
+
 
 TactiFrame is a hackathon entry for the **OpenCV AI Competition 2026 — Agentic Vision track (AWS)**.
 
