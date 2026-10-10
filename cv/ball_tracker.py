@@ -1,5 +1,5 @@
 """
-TactiVision CV — Ball Tracker (Trajectory-Based)
+TactiFrame CV — Ball Tracker (Trajectory-Based)
 
 Problem:
     At low detection confidence (0.05), we get multiple "ball" candidates per

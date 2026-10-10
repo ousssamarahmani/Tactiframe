@@ -1,5 +1,5 @@
 """
-TactiVision CV — Pitch Calibration & Homography Transformation
+TactiFrame CV — Pitch Calibration & Homography Transformation
 Transforms 2D broadcast camera pixel coordinates into metric pitch coordinates (105m x 68m).
 Includes RANSAC homography estimation, reprojection error calculation, and validity gating.
 """

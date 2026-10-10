@@ -1,5 +1,5 @@
 """
-TactiVision CV — Ball Interpolation
+TactiFrame CV — Ball Interpolation
 
 Problem:
     The ball is only detected in ~14% of frames (1005/7376).

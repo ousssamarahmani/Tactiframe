@@ -1,6 +1,13 @@
 """
-TL-06 Computer Vision Benchmark: Baseline Evaluator
-Evaluates Gate 1, Gate 2, Gate 4 (Calibration), and Gate 5 (Ball Interpolation & Team Assignment).
+TactiFrame CV — Baseline Evaluator
+Evaluates detection quality, tracking continuity, ball interpolation,
+team classification purity, and homography calibration for a pipeline run.
+Generates baseline_report.json + BASELINE_REPORT.md for docs/EVAL.md.
+
+Usage:
+    python cv/evaluate.py --run-dir data/sessions/<id> \
+                          --manifest docs/sample_manifest.json \
+                          --output-dir docs/baseline
 """
 
 import sys
@@ -22,7 +29,7 @@ from ball_interpolation import BallInterpolator
 
 
 def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
-    print("=== TL-06 Computer Vision Benchmark Evaluator ===")
+    print("=== TactiFrame CV Baseline Evaluator ===")
     print(f"Loading run output from: {run_dir}")
     print(f"Loading manifest from: {manifest_path}")
 
@@ -168,7 +175,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
     }
 
     report = {
-        "benchmarkId": manifest["benchmarkId"],
+        "session_id": manifest.get("sessionId", "unknown"),
         "schemaVersion": 1,
         "clipId": manifest["clips"][0]["clipId"],
         "modelId": manifest["models"][0]["modelId"],
@@ -181,9 +188,9 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
         "teamClassification": team_stats,
         "calibration": calibration_stats,
         "runtime": runtime_stats,
-        "gate1Status": "PASSED",
-        "gate4Status": "PASSED" if calibration_stats["status"] == "valid" else calibration_stats["status"].upper(),
-        "gate5Status": "PASSED"
+        "detectionStatus": "PASSED",
+        "calibrationStatus": "PASSED" if calibration_stats["status"] == "valid" else calibration_stats["status"].upper(),
+        "ballInterpolationStatus": "PASSED"
     }
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -193,14 +200,14 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
 
     # Render Markdown Report
     report_md_path = output_dir / "BASELINE_REPORT.md"
-    md_content = f"""# TL-06 Computer Vision Benchmark: Baseline Report (Gate 1, 2, 4 & 5)
+    md_content = f"""# TactiFrame CV Baseline Report
 
-**Benchmark ID**: `{report['benchmarkId']}`  
-**Evaluated Clip**: `{report['clipId']}` (`{total_video_frames}` frames @ {fps} FPS)  
-**Evaluated Model**: `{report['modelId']}` (`{report['modelWeights']}`)  
+**Session**: `{report['session_id']}`  
+**Clip**: `{report['clipId']}` (`{total_video_frames}` frames @ {fps} FPS)  
+**Model**: `{report['modelId']}` (`{report['modelWeights']}`)  
 **Model Checksum**: `{report['modelChecksum']}`  
 **Video Checksum**: `{report['videoChecksum']}`  
-**Status**: **GATE 1, GATE 2, GATE 4 (CALIBRATION) & GATE 5 (BALL & TEAMS) ESTABLISHED**  
+**Status**: Detection ✓ · Calibration: {calibration_stats['status'].upper()} · Ball Interpolation ✓  
 
 ---
 
@@ -213,7 +220,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
 
 ---
 
-## 2. Tracking Continuity (BoT-SORT)
+## 2. Tracking Continuity (ByteTrack)
 
 * **Unique Player Tracks**: `{tracking_stats['totalUniqueTracks']}` active track IDs
 * **Mean Track Duration**: `{tracking_stats['meanTrackDurationFrames']} frames` (`{tracking_stats['meanTrackDurationSeconds']}s`)
@@ -223,53 +230,53 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
 
 ---
 
-## 3. Ball Handling & Bounded Interpolation (Gate 5)
+## 3. Ball Interpolation
 
-| Metric | Raw Detections | After Interpolation | Delta / Added |
+| Metric | Raw Detections | After Interpolation | Delta |
 | :--- | :--- | :--- | :--- |
 | **Ball Frames** | `{ball_interp_stats['rawDetections']:,}` | `{ball_interp_stats['totalFramesWithBall']:,}` | `+{ball_interp_stats['interpolatedFramesAdded']:,} frames` |
-| **Pitch Coverage** | `{ball_interp_stats['rawCoveragePercent']}%` | `{ball_interp_stats['postInterpolationCoveragePercent']}%` | `+{ball_interp_stats['postInterpolationCoveragePercent'] - ball_interp_stats['rawCoveragePercent']:.2f}%` |
+| **Coverage** | `{ball_interp_stats['rawCoveragePercent']}%` | `{ball_interp_stats['postInterpolationCoveragePercent']}%` | `+{ball_interp_stats['postInterpolationCoveragePercent'] - ball_interp_stats['rawCoveragePercent']:.2f}%` |
 
-* **Max Interpolation Gap**: `{ball_interp_stats['maxAllowedGapFrames']} frames` (2.0s @ 25fps)
-* **Max Speed Ceiling**: `{ball_interp_stats['maxAllowedSpeedPxPerFrame']} px/frame` (prevents scene cut teleportation)
-* **Estimate Isolation**: Real detections preserve `interpolated: false` with original model confidence; interpolated points tagged `interpolated: true` with scaled confidence ceiling (0.3).
+* **Max Gap Interpolated**: `{ball_interp_stats['maxAllowedGapFrames']} frames` (2.0s @ 25fps)
+* **Max Speed Ceiling**: `{ball_interp_stats['maxAllowedSpeedPxPerFrame']} px/frame`
+* Interpolated points tagged `interpolated: true` with confidence ≤ 0.3; real detections unchanged.
 
 ---
 
-## 4. Pitch Calibration & Homography (Gate 4)
+## 4. Pitch Homography Calibration
 
-* **Calibration Status**: `{calibration_stats['status'].upper()}`
+* **Status**: `{calibration_stats['status'].upper()}`
 * **Reprojection Error (RMSE)**: **`{calibration_stats['reprojectionErrorMeters']} meters`** ({calibration_stats['reprojectionErrorPixels']} px)
-* **Benchmark Threshold**: `< 1.8 meters` (Gate 4 Pass Criterion)
-* **Calibration Inliers**: `{calibration_stats['inliersCount']} / {calibration_stats['landmarksUsed']} points`
+* **Valid threshold**: `< 1.8m` · **Degraded threshold**: `< 3.5m`
+* **Inliers used**: `{calibration_stats['inliersCount']} / {calibration_stats['landmarksUsed']} landmarks`
 
 ---
 
-## 5. Team Assignment & Purity
+## 5. Team Classification
 
 * **Team Distribution**:
+  * `team_a`: `{team_stats['distribution'].get('team_a', {}).get('count', 0):,}` ({team_stats['distribution'].get('team_a', {}).get('percentage', 0)}%)
   * `team_b`: `{team_stats['distribution'].get('team_b', {}).get('count', 0):,}` ({team_stats['distribution'].get('team_b', {}).get('percentage', 0)}%)
   * `referee`: `{team_stats['distribution'].get('referee', {}).get('count', 0):,}` ({team_stats['distribution'].get('referee', {}).get('percentage', 0)}%)
-  * `team_a`: `{team_stats['distribution'].get('team_a', {}).get('count', 0):,}` ({team_stats['distribution'].get('team_a', {}).get('percentage', 0)}%)
-* **Track ID Team Purity**: **`{team_stats['trackPurity']['trackPurityPercent']}%`** ({team_stats['trackPurity']['pureConsistentTracks']} / {team_stats['trackPurity']['totalTracks']} tracks maintain 100% consistent team identity across lifetime).
+* **Track Purity**: **`{team_stats['trackPurity']['trackPurityPercent']}%`** ({team_stats['trackPurity']['pureConsistentTracks']} / {team_stats['trackPurity']['totalTracks']} tracks with 100% consistent team label)
 
 ---
 
-## 6. Execution Runtime Profile
+## 6. Runtime
 
-* **Total Processed Frames**: `{runtime_stats['totalVideoFrames']:,}`
-* **Total Runtime**: `{runtime_stats['totalDurationSeconds']}s` ({runtime_stats['totalDurationSeconds']/60:.1f} mins)
-* **Processing Throughput**: `{runtime_stats['throughputFps']} FPS` (Single-thread CPU)
+* **Frames processed**: `{runtime_stats['totalVideoFrames']:,}`
+* **Total runtime**: `{runtime_stats['totalDurationSeconds']}s` ({runtime_stats['totalDurationSeconds']/60:.1f} mins)
+* **Throughput**: `{runtime_stats['throughputFps']} FPS`
 
 ---
 
-## 7. Gate Acceptance Assessment
+## 7. Summary
 
-1. [x] **Gate 0 (Manifest & Provenance)**: Model provenance, environment baseline, and video checksums locked.
-2. [x] **Gate 1 (Deterministic Repeatability)**: Run metadata, atomic writes, and output hashes verified.
-3. [x] **Gate 2 (Baseline Metric Gating)**: Player confidence (85.1%), ball coverage ({detection_stats['ball']['frameCoveragePercent']}%), and track lengths quantified.
-4. [x] **Gate 4 (Measured Pitch Calibration)**: Homography perspective matrix calibrated with **{calibration_stats['reprojectionErrorMeters']}m RMSE** error (< 1.8m valid threshold).
-5. [x] **Gate 5 (Ball Handling & Team Purity)**: Bounded interpolation expands ball coverage from 12.74% to **{ball_interp_stats['postInterpolationCoveragePercent']}%** with **{team_stats['trackPurity']['trackPurityPercent']}%** track team purity.
+- [x] Detection: YOLO ≥ 0.5 confidence filtering applied
+- [x] Tracking: ByteTrack persistent IDs across frames
+- [x] Ball interpolation: bounded (max gap {ball_interp_stats['maxAllowedGapFrames']}f, max speed {ball_interp_stats['maxAllowedSpeedPxPerFrame']}px/f)
+- [x] Homography calibration: {calibration_stats['status'].upper()} ({calibration_stats['reprojectionErrorMeters']}m RMSE)
+- [x] Team classification: {team_stats['trackPurity']['trackPurityPercent']}% track purity
 """
 
     with open(report_md_path, "w", encoding="utf-8") as f:

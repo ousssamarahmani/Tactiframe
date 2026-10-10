@@ -1,5 +1,5 @@
 """
-TactiVision CV — Team Classification
+TactiFrame CV — Team Classification
 Assigns players to Home/Away/Referee using jersey color (KMeans on HSV).
 """
 
