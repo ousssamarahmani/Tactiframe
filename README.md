@@ -6,7 +6,7 @@ Agentic Vision for football opposition analysis. The intended pipeline is SEE (O
 
 The offline **observation baseline has completed a full-duration technical run on a 4-minute-15-second match segment**. `run_pipeline.py` adapts the [TactiScout-CV](https://github.com/Marouan-balha/TactiScout-CV) observation worker and writes player tracks, sampled team labels, ball observations, an annotated video, and run metadata. The first full run used upstream BoT-SORT; the current worker uses Supervision ByteTrack so class, confidence, size, and visible-turf filters run before tracking. The user-designated match recording and its derived outputs are for local simulation and education only. See [docs/ASSETS.md](docs/ASSETS.md) for source hashes, model provenance, and the remaining public-footage gap.
 
-An initial **candidate** event layer now writes image-relative zones and evidence clips from the observation run. It has two visual event types and has not been manually validated. The six agent tools, approval, trace, FastAPI, AWS integration, and MCP are still unimplemented. See [docs/EVENT_CONTRACT.md](docs/EVENT_CONTRACT.md) for the event semantics. Do not treat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) as an implementation inventory.
+An initial **candidate** event layer now writes image-relative zones and evidence clips from the observation run. It has two visual event types and has not been manually validated. The six local agent tools, a vision-dependent tool sequence, trace, and a scripted coach-approval request are implemented. FastAPI, AWS integration, and MCP are still unimplemented. See [docs/EVENT_CONTRACT.md](docs/EVENT_CONTRACT.md) and [docs/AGENT_LOOP.md](docs/AGENT_LOOP.md). Do not treat [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) as an implementation inventory.
 
 ## Observation baseline
 
@@ -65,7 +65,7 @@ Run `python detect_events.py --run-dir data\sessions\match-20261011-right-bounda
 
 1. Obtain footage and model weights cleared for public submission; improve track continuity and ball coverage where event logic needs them.
 2. Review candidate events and clips against the source footage; measure false positives and refine the visual event rules.
-3. Implement the six tools, evidence-first gate, vision-driven agent loop, trace, and coach approval.
-4. Add AWS integration, FastAPI, and an end-to-end scripted demo.
+3. Validate the local agent trace and coach-approval path with reviewed evidence; keep candidate claims provisional.
+4. Add AWS integration, FastAPI, and an end-to-end submission demo.
 
 React and Next.js are not needed for the submission path.

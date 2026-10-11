@@ -32,6 +32,10 @@ The CV unit tests pass with `python -m unittest discover tests -q`, including th
 
 The 2½-minute local segment was rerun at `data/sessions/match-20261011-local-150s-polygon/` with clip-specific polygon keyframes. Relative to the identical segment without the polygon, final track observations fell from 13,206 to 11,760, final IDs from 96 to 87, and candidate events from 38 to 35. The known false `r0c2` density event around segment time 125 seconds disappeared. The polygon rejected 4,312 pre-track candidate boxes; 1,461 earlier final track observations fall outside it. Box matching found 11,744 of 11,745 earlier inside-polygon observations in the new run. This is an A/B check against the manually placed boundary, **not** labeled player recall. Ball candidates remained 236 and unverified. The 35 new clips all opened with expected frame counts, and the 21 unit tests pass. See [VIDEO_QA.md](VIDEO_QA.md) and [FIELD_POLYGON.md](FIELD_POLYGON.md).
 
+## Local agent tool-order test
+
+`run_agent.py` was run against both completed local sessions. The baseline events (19 density, 19 contest) made the orchestrator call `get_clip` after `list_events`; the polygon events (18 density, 17 contest) made it call `analyze_zone` next. Both runs then used the other evidence tool, drafted a candidate plan, and wrote `trace.json` plus a pending coach-approval request. The code enforces `list_events` before `draft_plan`; no approval is fabricated. There are 24 passing unit tests, including tool-order and approval checks. This demonstrates a vision-influenced local tool sequence, but AWS integration and a cleared public demo clip remain outstanding. See [AGENT_LOOP.md](AGENT_LOOP.md).
+
 ## Detector comparison on one 12-second segment
 
 With the same 60-frame local segment and `imgsz=960`, the faster football YOLOv8s checkpoint produced 1,023 player observations, 29 final IDs, and 29 ball candidates in about 25 seconds. The football YOLO11m checkpoint produced 1,046 player observations, 32 final IDs, and 14 ball candidates in about 52 seconds. This sample does not establish which checkpoint recognizes the ball more accurately; candidate counts include pitch-marking errors. YOLO11m did not improve ID continuity in this short comparison and was not chosen for the full local evaluation run.
@@ -57,7 +61,7 @@ Run the existing CV unit tests after installing dependencies:
 
 ## Not yet implemented
 
-Candidate event extraction, image-relative zones, and clip export have a local technical run but no labeled accuracy evaluation. Agent tools, trace, coach approval, AWS integration, API endpoints, and a full demo have no evaluation results yet. Their acceptance criteria are listed in [HACKATHON.md](HACKATHON.md).
+Candidate event extraction, image-relative zones, and clip export have a local technical run but no labeled accuracy evaluation. The local agent tools, trace, and pending coach approval have a scripted test but no live coach decision. AWS integration, API endpoints, and a cleared public demo have no evaluation results yet. Their acceptance criteria are listed in [HACKATHON.md](HACKATHON.md).
 
 ## Known observation limitations
 

@@ -1,6 +1,6 @@
 # TactiFrame — Architecture
 
-> **Mostly planned design, not an implementation inventory (11 October 2026).** The observation worker in `run_pipeline.py` and `cv/tracker.py` completed full-duration technical runs on local simulation footage. `detect_events.py`, `cv/event_detector.py`, and `cv/zones.py` now add candidate visual events, image-relative zones, and local clips. These events are unverified and are not calibrated pitch actions. A separately cleared clip is needed for public submission. Agent tools, approval, trace, API, AWS integration, and MCP described below are not implemented.
+> **Mostly planned design, not an implementation inventory (11 October 2026).** The observation worker in `run_pipeline.py` and `cv/tracker.py` completed full-duration technical runs on local simulation footage. `detect_events.py`, `cv/event_detector.py`, and `cv/zones.py` add unverified candidate visual events, image-relative zones, and local clips. `agent/tools.py`, `agent/orchestrator.py`, `run_agent.py`, and `approve_plan.py` now provide a local vision-driven tool sequence, trace, and coach approval path. A separately cleared clip is needed for public submission. API, AWS integration, and MCP described below are not implemented.
 
 ## Overview
 
