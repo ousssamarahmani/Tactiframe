@@ -1,141 +1,60 @@
-# TactiFrame — Evaluation Guide
+# TactiFrame evaluation status
 
-## Evaluation Criteria
+## Verified in this checkout
 
-| Criterion | How TactiFrame addresses it |
-|---|---|
-| Real computer vision | OpenCV 5 + YOLO detects players and ball; ByteTrack assigns persistent IDs; Zone_Analyzer maps positions to pitch zones |
-| Agentic behaviour | Agent_Orchestrator runs a multi-step Bedrock Converse loop: hypothesis → tool call → evidence evaluation → refinement (up to 10 iterations) |
-| AWS integration | S3 for video + clip storage; Amazon Bedrock for reasoning; optional AgentCore routing |
-| Evidence-backed output | Every tactical plan references at least one detected event; evidence clips are linked in the trace |
-| Human-in-the-loop | Approval_Gate requires explicit coach sign-off before any plan is delivered |
-| Reproducibility | No live AWS credentials required for tests; synthetic video fixture; moto for S3; mock.patch for Bedrock |
+The observation worker completed a full-duration technical run on a supplied 4-minute-15-second match segment. It processed a 5 fps working copy of all 7,661 source frames (1,277 sampled frames), wrote five nonempty run files, and produced a playable annotated video with 1,277 frames. The run folder is `data/sessions/match-20261011-5fps/`; its `run.json` records the input and model hashes, environment, counts, and 453-second execution time. The working copy's manifest at `data/input/video-project-3-5fps-1280.json` links it to the original source checksum. Per the user's instruction, this footage and its visual derivatives are for local simulation and education only; they are not public-submission assets. See [ASSETS.md](ASSETS.md).
 
----
+Measured output: 20,005 track observations, 220 final track IDs, 55 ball observations, and provisional team votes for 141 IDs. Sample annotated frames show player boxes and labels, but IDs fragment across camera motion and cuts; some sideline people are labeled as players. Ball coverage is 55/1,277 frames. This establishes a runnable observation baseline, not reliable possession or event evidence.
 
-## Known Limitations
+## Filtered run on the same local clip
 
-- **Heuristic event detection** — Event_Detector uses geometry and motion heuristics rather than a trained classifier. False positives are expected on unusual footage.
-- **Single-camera input** — No multi-feed synchronisation. One video clip per session.
-- **Short clips only** — Tested on clips up to ~5 minutes. Long-form (90-minute) processing is not optimised.
-- **YOLO confidence threshold** — Fixed at 0.5. Dense scenes with occlusions may produce missed detections.
-- **AgentCore optional** — AgentCore routing is tested against the mock only; a live AgentCore runtime is required for full end-to-end validation.
+`data/sessions/match-20261011-filtered-960/` completed in 380 seconds on the same 1,277-frame working copy. It used football YOLOv8 weights, `imgsz=960`, ball confidence 0.15, player confidence 0.30, IoU 0.5, a visible-green-turf check before Supervision ByteTrack, and a 10-pixel minimum player box height. Its `run.json` records OpenCV 5.0.0, Ultralytics 8.4.115, Torch 2.14.1+cpu, model path/checksum, settings, and rejection counts. Five files are nonempty; `tracked.mp4` opens with 1,277 frames.
 
----
+It produced 22,640 track observations and 179 final IDs, versus 20,005 and 220 for the upstream-style run. The pre-track filter rejected 1,021 off-turf candidates and 4,272 candidates below the player threshold. Unique final IDs in 30-second windows still range from 38 to 55, so track continuity remains insufficient for possession claims. The 507 ball candidates include pitch markings mistaken for the ball; this is **not** a verified increase in ball coverage. Do not interpolate these observations or use them as event evidence yet. These outputs remain local simulation material.
 
-## Reproducing the Demo
+Visual review exposed 1,597 duplicate `(frame, track_id)` pairs in this run: post-processing could assign the same ID to several players in a frame. This run must not be used as an identity-quality baseline. The merge logic has since been corrected and now fails a run if that invariant is violated.
 
-### 1. Environment Setup
+## Corrected full video run
 
-```bash
-# Clone the repository
-git clone https://github.com/<your-org>/tactiframe.git
-cd tactiframe
+`data/sessions/match-20261011-safe-merge/` processed the same 1,277 frames in 383 seconds and wrote all five nonempty files. Its annotated video opens with 1,277 frames. It has 22,640 player observations, 174 final IDs, 507 unverified ball candidates, and **zero duplicate `(frame, track_id)` pairs**. The run metadata identifies the checkpoint architecture as `yolov8s.yaml` and logs the software versions and inference settings. Three local 30-second review clips, their diagnostics, and the next manual labeling protocol are in [VIDEO_QA.md](VIDEO_QA.md). The corrected run still has substantial ID turnover, so it does not establish reliable possession or event evidence.
 
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+## Right-boundary video test
 
-# Install dependencies
-pip install -r requirements.txt
+The same full clip was rerun at `data/sessions/match-20261011-right-boundary/` after adding a visible right goal-line check before tracking. It completed in 418 seconds, wrote all five nonempty files, and produced an annotated video with 1,277 frames. The run has 21,578 player observations, 171 final IDs, 507 unverified ball candidates, and zero duplicate `(frame, track_id)` pairs. The filter recorded 2,841 candidate rejections beyond the right goal line. At source frames 101–108 it rejects both reported outside boxes (#132 and #568 in the prior run) while retaining the on-pitch goalkeeper and a nearby player. A 30-second rerun around those frames also completed with the two boxes absent. Sampled views elsewhere show removal of right-side staff boxes without an obvious on-pitch loss, but ground-truth labels are still needed to measure recall. The ball result did not improve.
 
-# Copy the environment template and fill in your values
-cp .env.example .env
-# Edit .env: set S3_BUCKET, BEDROCK_MODEL_ID, AWS_REGION
+The CV unit tests pass with `python -m unittest discover tests -q`, including the pre-track filter and candidate event checks. The virtual environment lacks `pytest`, so that runner has not been used.
+
+## Candidate event and clip run
+
+`detect_events.py` processed `data/sessions/match-20261011-right-boundary/` into 41 candidate events: 31 `zone_density` and 10 `zone_contest`. Each `events.json` record has an image-relative 3×3 zone and a local clip path. All 41 clip files opened and their reported frame counts matched the actual video frame counts. Two representative clip frames were reviewed: one shows a visible group of players in the named region, and the other shows both kit colors in the central region. This is a structural and spot visual check, **not** a precision or recall score. The first clip also contains the recorded video-player interface, which reinforces that the footage is a local simulation asset only. See [EVENT_CONTRACT.md](EVENT_CONTRACT.md). No possession, pass, turnover, or approval claim follows from these candidate types.
+
+## Detector comparison on one 12-second segment
+
+With the same 60-frame local segment and `imgsz=960`, the faster football YOLOv8s checkpoint produced 1,023 player observations, 29 final IDs, and 29 ball candidates in about 25 seconds. The football YOLO11m checkpoint produced 1,046 player observations, 32 final IDs, and 14 ball candidates in about 52 seconds. This sample does not establish which checkpoint recognizes the ball more accurately; candidate counts include pitch-marking errors. YOLO11m did not improve ID continuity in this short comparison and was not chosen for the full local evaluation run.
+
+## Reproduce the observation baseline
+
+Use Python 3.11 or 3.13, a rights-cleared football clip, and football-specific YOLO weights with class IDs ball=0, goalkeeper=1, player=2, referee=3. Do not use generic COCO weights for this check.
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements.txt
+.\.venv\Scripts\python prepare_clip.py --input data\input\match.mp4 --output data\input\match-5fps.mp4 --fps 5 --width 1280
+.\.venv\Scripts\python run_pipeline.py --video data\input\match-5fps.mp4 --model models\yolo-football-player-detection.pt --device cpu
 ```
 
-### 2. Download Model Weights
+The run should create `run.json`, `tracks.json`, `tracks_with_teams.json`, `ball_observations.json`, and `tracked.mp4` in a new `data/sessions/<run-id>/` folder. Inspect the files, counts, video playability, and nonempty detections before claiming success. `run.json` records input and model checksums and actual library versions. If inference fails after the folder is created, it records `status: failed` and the error.
 
-TactiFrame uses a YOLO model. Weights are not committed to the repository (see `.gitignore`).
+Run the existing CV unit tests after installing dependencies:
 
-```bash
-# Download YOLOv8n weights (example — use the model appropriate for your setup)
-mkdir -p models
-wget -O models/yolo.pt https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt
+```powershell
+.\.venv\Scripts\python -m unittest discover tests -q
 ```
 
-Set `YOLO_WEIGHTS_PATH=models/yolo.pt` in `.env` (or `config.py`).
+## Not yet implemented
 
-### 3. Run the Perception Pipeline
+Candidate event extraction, image-relative zones, and clip export have a local technical run but no labeled accuracy evaluation. Agent tools, trace, coach approval, AWS integration, API endpoints, and a full demo have no evaluation results yet. Their acceptance criteria are listed in [HACKATHON.md](HACKATHON.md).
 
-```bash
-python run_pipeline.py --video /path/to/clip.mp4
-```
+## Known observation limitations
 
-**Expected output:**
-```
-[TactiFrame] Processing video: /path/to/clip.mp4
-[TactiFrame] Session ID: 3f2a1b9c-...
-[TactiFrame] Events detected: 7
-  - pass     @ 4.12s
-  - press    @ 8.75s
-  - shot     @ 14.33s
-  - cross    @ 19.01s
-  - pass     @ 22.50s
-  - set_piece @ 28.90s
-  - pass     @ 35.14s
-[TactiFrame] Done. Session data: data/sessions/3f2a1b9c-...
-```
-
-### 4. Run the Full Agent Loop
-
-```bash
-python run_agent.py --video /path/to/clip.mp4
-```
-
-**Expected output:**
-```
-[TactiFrame] Starting agent loop...
-[TactiFrame] Session: 3f2a1b9c-...
-[TactiFrame] Iteration 1: run_perception
-[TactiFrame] Iteration 2: list_events (7 events found)
-[TactiFrame] Iteration 3: analyze_zone (zone Z05 — dominant: team_a)
-[TactiFrame] Iteration 4: draft_plan
-[TactiFrame] Plan pending approval...
-[TactiFrame] (Awaiting coach decision — use POST /approve/<session_id> or press Enter to auto-approve in demo mode)
-[TactiFrame] Plan APPROVED.
-
-=== Tactical Plan ===
-Opponent team_b is overloading the left flank (zone Z02) in the first 15 seconds.
-Recommend shifting the defensive block right and pressing higher in Z05.
-Evidence: events [evt-001 (press@8.75s), evt-003 (shot@14.33s)]
-```
-
-### 5. Run All Tests (no AWS credentials required)
-
-```bash
-pytest tests/ -v
-```
-
-**Expected output:**
-```
-tests/test_agent_trace.py::test_tool_calls_contain_required_tools PASSED
-tests/test_agent_trace.py::test_draft_plan_event_ids_subset_of_list_events PASSED
-tests/test_agent_trace.py::test_draft_plan_without_list_events_returns_error PASSED
-tests/test_cv_properties.py::test_detection_confidence_threshold PASSED
-...
-XX passed in X.XXs
-```
-
-### 6. Start the API Server
-
-```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-Then call the API:
-
-```bash
-# Submit a video for analysis
-curl -X POST http://localhost:8000/analyse \
-  -H "Content-Type: application/json" \
-  -d '{"video_path": "/path/to/clip.mp4"}'
-
-# Retrieve events
-curl http://localhost:8000/events/<session_id>
-
-# Approve a plan
-curl -X POST http://localhost:8000/approve/<session_id> \
-  -H "Content-Type: application/json" \
-  -d '{"decision": "approved", "reason": ""}'
-```
+Team labels are based on jersey colors sampled from player boxes. If the selected calibration frame has fewer than six player boxes, team calibration is unavailable and labels are `unknown`. The first run used upstream BoT-SORT; the filtered run uses ByteTrack. Both use post-processing that can merge track fragments, and both still fragment identities. The visible-turf filter can remove legitimate players on or just outside the touchline. The worker outputs observations only, not verified tactical evidence. Sampling at 5 fps can miss quick ball movement.

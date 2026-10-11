@@ -23,8 +23,8 @@
 
 ### Phase A — Perception (P0)
 
-- [ ] **Stabilize pipeline on one 5–10 min clip**
-  Run the full `cv/pipeline.py` stack end-to-end on a real match clip between 5 and 10 minutes long. Confirm detections are stable (no crash, no silent empty output), ByteTrack IDs persist across the full duration, and the session JSON is written correctly. Fix any frame-drop, memory, or seek issues before proceeding.
+- [ ] **Stabilize observation quality on one 3–5 min clip**
+  `run_pipeline.py` now completes a full-duration technical run on a 4-minute-15-second match segment and writes the run folder. That clip and its visual derivatives are restricted to local simulation and education, so obtain a separately cleared clip for public submission. The first run used BoT-SORT; the current worker applies filters before ByteTrack. Before relying on observations for event logic, improve ID continuity and ball coverage. Confirm the selected checkpoint's use terms. The run uses a 5 fps working copy; its measured limitations are in `docs/EVAL.md`.
 
 - [ ] **Zones (ROI or light homography) on every event**
   Every detected event in `events.json` must carry a `zone_id` field populated by `ZoneAnalyzer`. If a full homography is too slow for the clip length, use a fixed ROI grid. Verify that no event is written without a zone assignment.
@@ -104,8 +104,8 @@
 - [ ] **Log VSS/Cosmos steps in the same agent trace**
   Extend `Trace_Logger` to record VSS query steps and Cosmos confirmation steps with the same `step`, `tool_name`, `input`, `output_summary`, `hypothesis_before`, `hypothesis_after` schema. Judges should see a single `trace.json` that shows the full reasoning chain including NVIDIA steps.
 
-- [ ] **Optional `--use-vss` flag on pipeline**
-  Add `--use-vss` to `run_pipeline.py`. When set, route perception through `vss_adapter.py` instead of the local YOLO + ByteTrack stack. The rest of the pipeline (zone assignment, event schema, S3 upload) remains unchanged.
+- [ ] **Optional VSS evidence step in the agent**
+  If P0 works and time remains, let the agent query VSS for similar sequences after OpenCV/YOLO has produced an event or hypothesis. Cosmos may then confirm or reject the retrieved evidence. Keep local OpenCV perception as the primary path and record these optional calls in the same trace.
 
 ---
 

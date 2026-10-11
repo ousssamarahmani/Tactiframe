@@ -1,7 +1,10 @@
 # ── Computer Vision ───────────────────────────────────────────────────────────
 opencv-python>=5.0.0
-ultralytics==8.3.40          # YOLO v8/v11 — includes ByteTrack via supervision
-supervision==0.25.1          # ByteTrack wrapper + annotation utilities
+ultralytics==8.4.115         # football YOLO inference and BoT-SORT tracking
+supervision==0.25.1          # video I/O and annotation utilities
+lap>=0.5.12                  # BoT-SORT assignment
+numpy>=1.26,<3
+scikit-learn>=1.3,<2        # jersey-color team classification
 
 # ── API ───────────────────────────────────────────────────────────────────────
 fastapi==0.115.6

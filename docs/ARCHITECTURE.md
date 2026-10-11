@@ -1,5 +1,7 @@
 # TactiFrame — Architecture
 
+> **Mostly planned design, not an implementation inventory (11 October 2026).** The observation worker in `run_pipeline.py` and `cv/tracker.py` completed full-duration technical runs on local simulation footage. `detect_events.py`, `cv/event_detector.py`, and `cv/zones.py` now add candidate visual events, image-relative zones, and local clips. These events are unverified and are not calibrated pitch actions. A separately cleared clip is needed for public submission. Agent tools, approval, trace, API, AWS integration, and MCP described below are not implemented.
+
 ## Overview
 
 TactiFrame converts raw match video footage into evidence-backed tactical intelligence through a four-phase pipeline:
@@ -86,7 +88,7 @@ graph TD
 | `event_detector.py` | Event_Detector — converts frame-level tracks into discrete football events |
 | `pipeline.py` | Perception_Engine — orchestrates the full cv/ stack, extracts evidence clips, uploads to S3, writes session JSON |
 
-The first four modules are copied from [TactiScout-CV](https://github.com/Marouan-balha/TactiScout-CV) without modification.
+Current observation work adapts the upstream `cv/tracker.py` and `run_pipeline.py`; upstream `cv/detector.py` and `cv/pipeline.py` are empty placeholders. The remaining components in this section are planned.
 
 ### agent/ — Decision Layer
 
@@ -159,4 +161,4 @@ data/sessions/{session_id}/
 
 4. **Evidence-first hard gate** — `draft_plan` checks `metadata.events_reviewed` before invoking the orchestrator. Both adapters inherit this gate automatically.
 
-5. **Extend, don't rewrite** — `cv/pipeline.py` is extended to add zone assignment, event detection, and clip extraction. The four TactiScout-CV modules are used as-is.
+5. **Build on observations** — The adapted TactiScout-CV observation worker is the starting point; zone assignment, event detection, and clip extraction remain to be built.

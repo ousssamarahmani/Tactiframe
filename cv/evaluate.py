@@ -1,8 +1,11 @@
 """
-TactiFrame CV — Baseline Evaluator
+TactiFrame CV — Legacy baseline summary (not a validated accuracy evaluator)
 Evaluates detection quality, tracking continuity, ball interpolation,
 team classification purity, and homography calibration for a pipeline run.
-Generates baseline_report.json + BASELINE_REPORT.md for docs/EVAL.md.
+This legacy script uses a sample manifest and marks several gates PASSED without
+ground-truth annotations. Its output must not be used as evidence of detection,
+tracking, calibration, or ball accuracy. Use video_review.py to prepare review
+clips, then label ground truth before reporting accuracy metrics.
 
 Usage:
     python cv/evaluate.py --run-dir data/sessions/<id> \
@@ -75,7 +78,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
         }
     }
 
-    # 2. Tracking Quality Metrics (BoT-SORT)
+    # 2. Tracking diagnostics (not identity accuracy)
     track_lengths = Counter(d["track_id"] for d in tracks)
     lens = list(track_lengths.values())
 
@@ -91,7 +94,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
         "shortTracksUnder50Frames": sum(1 for l in lens if l < 50)
     }
 
-    # 3. Ball Interpolation & Trajectory Gating (Gate 5)
+    # 3. Hypothetical ball interpolation; input candidates may be false positives
     interpolator = BallInterpolator(max_gap_frames=50, max_speed_px_per_frame=80.0)
     interpolated_ball = interpolator.interpolate(ball_obs)
     interpolated_frames_count = sum(1 for d in interpolated_ball if d.get("interpolated", False))
@@ -106,7 +109,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
         "postInterpolationCoveragePercent": ball_coverage_after_interp,
         "maxAllowedGapFrames": interpolator.max_gap_frames,
         "maxAllowedSpeedPxPerFrame": interpolator.max_speed_px_per_frame,
-        "status": "PASSED"
+        "status": "UNVERIFIED"
     }
 
     # 4. Team Assignment Stability
@@ -188,9 +191,9 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
         "teamClassification": team_stats,
         "calibration": calibration_stats,
         "runtime": runtime_stats,
-        "detectionStatus": "PASSED",
+        "detectionStatus": "UNVERIFIED",
         "calibrationStatus": "PASSED" if calibration_stats["status"] == "valid" else calibration_stats["status"].upper(),
-        "ballInterpolationStatus": "PASSED"
+        "ballInterpolationStatus": "UNVERIFIED"
     }
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -207,7 +210,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
 **Model**: `{report['modelId']}` (`{report['modelWeights']}`)  
 **Model Checksum**: `{report['modelChecksum']}`  
 **Video Checksum**: `{report['videoChecksum']}`  
-**Status**: Detection ✓ · Calibration: {calibration_stats['status'].upper()} · Ball Interpolation ✓  
+**Status**: Detection UNVERIFIED · Calibration: {calibration_stats['status'].upper()} · Ball Interpolation UNVERIFIED
 
 ---
 
@@ -258,7 +261,7 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
   * `team_a`: `{team_stats['distribution'].get('team_a', {}).get('count', 0):,}` ({team_stats['distribution'].get('team_a', {}).get('percentage', 0)}%)
   * `team_b`: `{team_stats['distribution'].get('team_b', {}).get('count', 0):,}` ({team_stats['distribution'].get('team_b', {}).get('percentage', 0)}%)
   * `referee`: `{team_stats['distribution'].get('referee', {}).get('count', 0):,}` ({team_stats['distribution'].get('referee', {}).get('percentage', 0)}%)
-* **Track Purity**: **`{team_stats['trackPurity']['trackPurityPercent']}%`** ({team_stats['trackPurity']['pureConsistentTracks']} / {team_stats['trackPurity']['totalTracks']} tracks with 100% consistent team label)
+* **Within-ID label consistency**: `{team_stats['trackPurity']['trackPurityPercent']}%` ({team_stats['trackPurity']['pureConsistentTracks']} / {team_stats['trackPurity']['totalTracks']} IDs). This is not verified team identity accuracy.
 
 ---
 
@@ -272,11 +275,11 @@ def evaluate_baseline(run_dir: Path, manifest_path: Path, output_dir: Path):
 
 ## 7. Summary
 
-- [x] Detection: YOLO ≥ 0.5 confidence filtering applied
-- [x] Tracking: ByteTrack persistent IDs across frames
-- [x] Ball interpolation: bounded (max gap {ball_interp_stats['maxAllowedGapFrames']}f, max speed {ball_interp_stats['maxAllowedSpeedPxPerFrame']}px/f)
-- [x] Homography calibration: {calibration_stats['status'].upper()} ({calibration_stats['reprojectionErrorMeters']}m RMSE)
-- [x] Team classification: {team_stats['trackPurity']['trackPurityPercent']}% track purity
+- [ ] Detection accuracy: requires labeled video frames
+- [ ] Identity continuity: requires reviewed player identities; this script only counts IDs
+- [ ] Ball interpolation accuracy: requires validated ball detections and scene-cut checks
+- [ ] Homography calibration: {calibration_stats['status'].upper()} ({calibration_stats['reprojectionErrorMeters']}m RMSE)
+- [ ] Team classification accuracy: requires labeled team identities
 """
 
     with open(report_md_path, "w", encoding="utf-8") as f:

@@ -1,6 +1,6 @@
 """
 TactiFrame CV — Team Classification
-Assigns players to Home/Away/Referee using jersey color (KMeans on HSV).
+Assigns outfield players to two provisional teams using jersey color (KMeans on HSV).
 """
 
 import cv2
@@ -11,12 +11,14 @@ from sklearn.cluster import KMeans
 class TeamClassifier:
     def __init__(self):
         self.kmeans = None
-        self.team_labels = ['team_a', 'team_b', 'referee']
+        self.team_labels = ['team_a', 'team_b']
         self.calibrated = False
 
     def get_jersey_color(self, frame, bbox):
         """Extract dominant HSV color from player's torso region."""
         x1, y1, x2, y2 = [int(v) for v in bbox]
+        x1, y1 = max(0, x1), max(0, y1)
+        x2, y2 = min(frame.shape[1], x2), min(frame.shape[0], y2)
         crop = frame[y1:y2, x1:x2]
         if crop.size == 0:
             return np.array([0, 0, 0])
@@ -41,13 +43,13 @@ class TeamClassifier:
             return False
 
         colors = np.array(colors)
-        self.kmeans = KMeans(n_clusters=3, n_init=10, random_state=42)
+        self.kmeans = KMeans(n_clusters=2, n_init=10, random_state=42)
         self.kmeans.fit(colors)
         self.calibrated = True
         return True
 
     def classify(self, frame, bbox):
-        """Classify a single player into team_a/team_b/referee."""
+        """Classify a single outfield player into provisional team_a/team_b."""
         if not self.calibrated:
             return 'unknown'
 

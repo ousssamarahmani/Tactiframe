@@ -30,6 +30,8 @@ build/
 
 # ── Virtual environments ──────────────────────────────────────────────────────
 .venv/
+.tmp/
+runs/
 venv/
 env/
 ENV/
@@ -54,7 +56,3 @@ Thumbs.db
 
 # ── Logs ──────────────────────────────────────────────────────────────────────
 *.log
-
-# ── Reference folders (never commit) ─────────────────────────────────────────
-Tactilens-main/
-_tactilens_ref/
