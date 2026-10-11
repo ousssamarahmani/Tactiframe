@@ -1,5 +1,15 @@
 # TactiFrame
 
+<p align="center">
+  <img src="docs/assets/logo.png" alt="TactiFrame logo" width="340" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/banner.png" alt="TactiFrame agentic vision concept banner" width="100%" />
+</p>
+
+> The banner is concept artwork. The current implementation status is described below; AWS and NVIDIA integrations shown in the artwork are not shipped yet.
+
 Agentic Vision for football opposition analysis. The intended pipeline is SEE (OpenCV 5) → UNDERSTAND (events) → DECIDE (agent tools) → ACT (coach approval).
 
 ## Current status
