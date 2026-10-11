@@ -39,6 +39,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--iou", type=float, default=0.5)
     parser.add_argument("--min-player-height", type=int, default=10)
     parser.add_argument("--no-pitch-mask", action="store_true", help="Disable the visible-green-turf filter")
+    parser.add_argument("--field-polygons", type=Path, default=None,
+                        help="Manual image-space polygon keyframes for this exact clip")
     parser.add_argument("--device", default=None, help="Inference device, for example cpu or cuda:0")
     parser.add_argument("--sample-frames", type=int, default=25)
     parser.add_argument("--calibration-frame", type=int, default=None)
@@ -69,6 +71,8 @@ def main() -> int:
         raise ValueError(f"Video cannot be opened: {args.video}")
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = float(cap.get(cv2.CAP_PROP_FPS))
+    frame_size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                  int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     cap.release()
     if frame_count < 1 or fps <= 0:
         raise ValueError("Video has no readable frames or valid FPS")
@@ -80,6 +84,10 @@ def main() -> int:
     started_clock = time.perf_counter()
     video_hash = sha256_file(args.video)
     model_hash = sha256_file(args.model)
+    from cv.field_polygon import FieldPolygonTimeline
+    field_polygon = (FieldPolygonTimeline.from_file(args.field_polygons,
+                     video_checksum=video_hash, frame_size=frame_size)
+                     if args.field_polygons else None)
 
     metadata = {
         "schemaVersion": 1,
@@ -99,6 +107,10 @@ def main() -> int:
         "outputs": {},
         "quality": {"pitchCalibration": "unavailable", "events": "unavailable", "evidenceEligibility": "candidate-only"},
     }
+    if args.field_polygons:
+        metadata["parameters"]["fieldPolygons"] = str(args.field_polygons.resolve())
+        metadata["parameters"]["fieldPolygonChecksum"] = sha256_file(args.field_polygons)
+        metadata["quality"]["pitchCalibration"] = "manual-image-polygon"
     write_json(output_dir / "run.json", metadata)
 
     try:
@@ -106,7 +118,8 @@ def main() -> int:
                                 device=args.device, player_conf=args.player_conf,
                                 ball_conf=args.ball_conf, imgsz=args.imgsz, iou=args.iou,
                                 min_player_height=args.min_player_height,
-                                use_pitch_mask=not args.no_pitch_mask)
+                                use_pitch_mask=not args.no_pitch_mask,
+                                field_polygon=field_polygon)
         checkpoint_args = (tracker.model.ckpt or {}).get("train_args", {})
         architecture = tracker.model.model.yaml.get("yaml_file") or checkpoint_args.get("model")
         metadata["model"]["architecture"] = Path(architecture).name if architecture else "unknown"
@@ -162,7 +175,9 @@ def main() -> int:
             "annotatedVideo": "tracked.mp4",
         }
         metadata["quality"]["teamCalibration"] = "available" if calibrated else "unavailable"
-        metadata["quality"]["pitchCalibration"] = "visible-green-mask" if not args.no_pitch_mask else "unavailable"
+        metadata["quality"]["pitchCalibration"] = (
+            "manual-image-polygon" if field_polygon is not None else
+            "visible-green-mask" if not args.no_pitch_mask else "unavailable")
         metadata["filterRejections"] = dict(tracker.filter_counts)
         metadata["counts"] = {
             "trackObservations": len(tracks),

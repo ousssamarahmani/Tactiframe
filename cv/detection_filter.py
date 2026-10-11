@@ -64,12 +64,14 @@ def filter_detections(
     ball_conf: float,
     min_player_height: int,
     use_pitch_mask: bool,
+    field_polygon=None,
+    frame_index: int = 0,
 ) -> tuple[np.ndarray, Counter]:
     """Return a keep mask and rejection counts; test the player's feet against turf."""
     h, w = frame.shape[:2]
     turf = pitch_mask(frame) if use_pitch_mask else None
     turf_support = cv2.blur((turf > 0).astype(np.float32), (19, 19)) if turf is not None else None
-    right_line = right_goal_line(frame) if use_pitch_mask else None
+    right_line = right_goal_line(frame) if use_pitch_mask and field_polygon is None else None
     keep = np.zeros(len(xyxy), dtype=bool)
     rejected = Counter()
 
@@ -85,9 +87,13 @@ def filter_detections(
         if x2 <= x1 or y2 <= y1 or (cls != BALL and y2 - y1 < min_player_height):
             rejected["size"] += 1
             continue
+        px = min(w - 1, max(0, int((x1 + x2) / 2)))
+        py = min(h - 1, max(0, int((y1 + y2) / 2 if cls == BALL else y2)))
+        if field_polygon is not None and not field_polygon.contains(
+                frame_index, px, py, margin_px=3 if cls == BALL else 5):
+            rejected["off_pitch_rejected"] += 1
+            continue
         if turf_support is not None:
-            px = min(w - 1, max(0, int((x1 + x2) / 2)))
-            py = min(h - 1, max(0, int((y1 + y2) / 2 if cls == BALL else y2)))
             if right_line is not None:
                 slope, intercept = right_line
                 boundary_x = (py - intercept) / slope

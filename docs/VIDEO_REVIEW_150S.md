@@ -30,3 +30,7 @@ This is a six-frame qualitative sample plus file-integrity checks, **not** measu
 ## Decision
 
 The 2½-minute observation → candidate event → clip pipeline works technically. **Do not present all 38 events as valid tactical evidence.** Before agent tools consume them, fix or gate the right-goal-line leakage, manually label representative event clips, and either reject false events or mark them as unverified. Pass and turnover events remain blocked by unverified ball detections and weak track continuity.
+
+## Follow-up: manual field polygon
+
+A second full run at `data/sessions/match-20261011-local-150s-polygon/` used a clip-specific manual polygon before tracking. The previously identified off-pitch group at 125 seconds is absent, and the corresponding `r0c2` event is gone. See [VIDEO_QA.md](VIDEO_QA.md) for the A/B counts and limits. The original failure above remains documented as the baseline comparison.

@@ -25,7 +25,7 @@ TRACK_CLASSES = [PLAYER_CLASS, GOALKEEPER_CLASS]
 class PlayerTracker:
     def __init__(self, model_path='models/best.pt', conf=0.15, device=None,
                  player_conf=0.30, ball_conf=0.15, imgsz=960, iou=0.5,
-                 min_player_height=10, use_pitch_mask=True):
+                 min_player_height=10, use_pitch_mask=True, field_polygon=None):
         self.model = YOLO(model_path)
         self.conf = conf
         self.device = device
@@ -35,6 +35,7 @@ class PlayerTracker:
         self.iou = iou
         self.min_player_height = min_player_height
         self.use_pitch_mask = use_pitch_mask
+        self.field_polygon = field_polygon
         self.filter_counts = Counter()
 
     def track_video(self, video_path, output_path='output/tracked_v5.mp4'):
@@ -103,6 +104,8 @@ class PlayerTracker:
                 player_conf=self.player_conf, ball_conf=self.ball_conf,
                 min_player_height=self.min_player_height,
                 use_pitch_mask=self.use_pitch_mask,
+                field_polygon=self.field_polygon,
+                frame_index=idx,
             )
             self.filter_counts.update(rejected)
             class_ids, confidences, xyxy = class_ids[keep], confidences[keep], xyxy[keep]

@@ -2,6 +2,7 @@ import numpy as np
 import unittest
 
 from cv.detection_filter import filter_detections, right_goal_line
+from cv.field_polygon import FieldPolygonTimeline
 
 
 class TestDetectionFilter(unittest.TestCase):
@@ -40,3 +41,30 @@ class TestDetectionFilter(unittest.TestCase):
         self.assertIsNotNone(right_goal_line(frame))
         self.assertEqual(keep.tolist(), [False, False, True])
         self.assertEqual(rejected["outside_right_goal_line"], 2)
+
+    def test_manual_polygon_rejects_green_runoff_before_tracking(self):
+        frame = np.full((120, 180, 3), (20, 110, 20), dtype=np.uint8)
+        polygon = FieldPolygonTimeline([
+            {"frame": 0, "points": [[0, 20], [100, 10], [180, 75], [180, 120], [0, 120]]},
+        ], (180, 120), "sha256:test")
+        boxes = np.array([
+            [145, 18, 160, 38],  # staff, green runoff outside diagonal
+            [120, 70, 135, 95],  # on-pitch player
+            [145, 35, 151, 41],  # ball outside
+        ], dtype=float)
+        keep, rejected = filter_detections(
+            frame, boxes, np.array([0.9, 0.9, 0.9]), np.array([2, 2, 0]),
+            player_conf=0.3, ball_conf=0.15, min_player_height=10,
+            use_pitch_mask=True, field_polygon=polygon, frame_index=0,
+        )
+        self.assertEqual(keep.tolist(), [False, True, False])
+        self.assertEqual(rejected["off_pitch_rejected"], 2)
+
+    def test_polygon_interpolates_and_checks_video_identity(self):
+        polygon = FieldPolygonTimeline([
+            {"frame": 0, "points": [[0, 10], [90, 10], [90, 90], [0, 90]]},
+            {"frame": 10, "points": [[10, 10], [100, 10], [100, 90], [10, 90]]},
+        ], (100, 100), "sha256:test")
+        self.assertAlmostEqual(polygon.polygon_at(5)[0, 0], 5)
+        self.assertTrue(polygon.contains(5, 50, 50))
+        self.assertFalse(polygon.contains(5, 0, 50, margin_px=0))

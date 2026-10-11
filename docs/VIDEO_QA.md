@@ -42,3 +42,11 @@ The 30–180 second portion of the same local recording was copied to `data/inpu
 | Event clips | 38; all open and have expected frame counts |
 
 Thirty-second windows had median 16–20 boxes per frame and 41–52 distinct final IDs. The ID count remains high for continuity claims. A frame at segment time 25 seconds (`review/annotated-25s.jpg`) shows several correctly boxed on-pitch players, two or more missed players near the central region, and no obvious tracked sideline staff. Two event-clip midframes were also opened for a spot check. No ground-truth accuracy or event precision was measured.
+
+## Manual field-polygon A/B test on the same segment
+
+`data/sessions/match-20261011-local-150s-polygon/` reran the same 750-frame clip and model with `--field-polygons data/input/video-project-3-local-150s-field-polygons.json`. The calibration is clip-specific and ignored by Git. The run produced 11,760 track observations, 87 final IDs, 236 unverified ball candidates, and zero duplicate frame/ID pairs. Its metadata records the calibration checksum and 4,312 pre-track `off_pitch_rejected` candidate boxes. It produced 35 candidate events (18 zone density, 17 zone contest) and 35 playable clips with expected frame counts.
+
+The earlier run had 13,206 track observations, 96 IDs, and 38 events. Applying the polygon to earlier final tracks identifies 1,461 observations outside it; the new run has one observation just beyond the mathematical boundary within the configured five-pixel line margin. Greedy same-frame box matching at IoU ≥0.3 matches 11,744 of 11,745 earlier inside-polygon observations in the new run. This suggests the reduced count came chiefly from outside boxes, but it is **not a labeled player-recall result**.
+
+The earlier `zone_density` candidate in `r0c2` from 115.0–130.6 seconds, driven by staff on green runoff, is absent in the new `events.json`. The goal-area frames at 105, 115, 125, and 135 seconds visibly retain the player group and goalkeeper while removing the staff boxes. Missed on-pitch players, team-label errors, high ID turnover, and unverified ball candidates remain. The manual polygon must be recalibrated for new footage or substantially different camera views.
