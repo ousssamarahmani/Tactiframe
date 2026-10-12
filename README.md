@@ -101,6 +101,8 @@ Two real local runs took different next steps because their OpenCV-derived candi
 
 The [hackathon checklist](docs/HACKATHON.md) is a target specification; the table above records current implementation.
 
+For the coach-facing end state after the hackathon, see [TactiFrame Workspace](docs/PRODUCT_WORKSPACE.md): an evidence-bound Agent Vision Chat and light session/events/plan workspace that reuses this pipeline rather than bypassing it.
+
 ## Repository map
 
 | Path | Purpose |
