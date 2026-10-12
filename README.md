@@ -112,6 +112,7 @@ For the coach-facing end state after the hackathon, see [TactiFrame Workspace](d
 | `agent/`, `run_agent.py`, `approve_plan.py` | Six-tool local loop, trace, and coach decision |
 | `tests/` | Perception, filtering, event, gate, and tool-order checks |
 | `docs/EVAL.md` | Measured runs and limitations |
+| `docs/CV_BASELINE.md` | Frozen pitch-aware CV reference and acceptance checks |
 | `docs/ASSETS.md` | Footage and model provenance |
 
 ## Limits, assets, and license

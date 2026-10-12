@@ -62,6 +62,10 @@ def main() -> int:
             event["evidence"].update({
                 "startFrame": start,
                 "endFrame": end,
+                "startSeconds": round(start / fps, 3),
+                "endSeconds": round(end / fps, 3),
+                "eventStartSeconds": event["startSeconds"],
+                "eventEndSeconds": event["endSeconds"],
                 "frames": export_clip(source, clip_path, start, end, fps, width, height),
             })
         write_json(run_dir / "events.json", events)

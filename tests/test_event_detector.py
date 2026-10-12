@@ -21,6 +21,13 @@ class EventDetectorTests(unittest.TestCase):
                          {"zone_density", "zone_contest"})
         self.assertTrue(all(event["zone"]["coordinateSystem"] == "image_relative_3x3"
                             for event in events))
+        for event in events:
+            self.assertEqual(event["status"], "candidate")
+            self.assertFalse(event["confidence"]["calibrated"])
+            self.assertGreaterEqual(event["confidence"]["score"], 0)
+            self.assertLessEqual(event["confidence"]["score"], 1)
+            self.assertEqual(event["detector"]["name"], "sustained-zone-observation")
+            self.assertEqual(event["detector"]["parameters"]["minSeconds"], 4.0)
 
     def test_short_or_unknown_team_does_not_create_contest(self):
         tracks = [{"frame": frame, "track_id": track_id,

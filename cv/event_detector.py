@@ -8,6 +8,28 @@ from collections import defaultdict
 from cv.zones import zone_for_point
 
 
+DETECTOR_NAME = "sustained-zone-observation"
+DETECTOR_VERSION = "1"
+DENSITY_MIN_DISTINCT_TRACK_IDS = 4
+CONTEST_MIN_PLAYERS_PER_TEAM = 2
+
+
+def candidate_confidence(span: dict, min_frames: int) -> dict:
+    """Return a transparent rule-support score, not a calibrated probability."""
+    duration_score = min(1.0, span["observedFrames"] / (min_frames * 2))
+    occupancy_score = min(1.0, span["totalDistinctIds"] / 8)
+    return {
+        "score": round(0.6 * duration_score + 0.4 * occupancy_score, 3),
+        "method": "rule-support-v1",
+        "calibrated": False,
+        "components": {
+            "observedFrames": span["observedFrames"],
+            "minimumFrames": min_frames,
+            "meanDistinctTrackIds": round(span["totalDistinctIds"] / span["observedFrames"], 3),
+        },
+    }
+
+
 def detect_events(tracks: list[dict], fps: float, width: int, height: int,
                   min_seconds: float = 4.0, max_gap_seconds: float = 0.4) -> list[dict]:
     """Find sustained zone density and two-team contests on sampled frames."""
@@ -35,12 +57,12 @@ def detect_events(tracks: list[dict], fps: float, width: int, height: int,
         for zone, members in zones.items():
             # Distinct IDs avoid duplicate boxes inflating the occupancy count.
             ids = {member["track_id"] for member in members}
-            if len(ids) >= 4:
+            if len(ids) >= DENSITY_MIN_DISTINCT_TRACK_IDS:
                 observed[("zone_density", zone)] = ids
             teams = {team: {member["track_id"] for member in members
                             if member.get("team") == team}
                      for team in ("team_a", "team_b")}
-            if all(len(team_ids) >= 2 for team_ids in teams.values()):
+            if all(len(team_ids) >= CONTEST_MIN_PLAYERS_PER_TEAM for team_ids in teams.values()):
                 observed[("zone_contest", zone)] = ids
 
         for key, ids in observed.items():
@@ -49,11 +71,13 @@ def detect_events(tracks: list[dict], fps: float, width: int, height: int,
                 if previous is not None:
                     finished.append((key, previous))
                 active[key] = {"startFrame": frame, "lastFrame": frame,
-                               "observedFrames": 1, "trackIds": set(ids)}
+                               "observedFrames": 1, "trackIds": set(ids),
+                               "totalDistinctIds": len(ids)}
             else:
                 previous["lastFrame"] = frame
                 previous["observedFrames"] += 1
                 previous["trackIds"].update(ids)
+                previous["totalDistinctIds"] += len(ids)
 
         for key in list(active):
             if key not in observed and frame - active[key]["lastFrame"] >= max_gap:
@@ -75,6 +99,17 @@ def detect_events(tracks: list[dict], fps: float, width: int, height: int,
             "endSeconds": round(span["lastFrame"] / fps, 3),
             "zone": {"id": zone, "coordinateSystem": "image_relative_3x3"},
             "trackIds": sorted(span["trackIds"]),
+            "confidence": candidate_confidence(span, min_frames),
+            "detector": {
+                "name": DETECTOR_NAME,
+                "version": DETECTOR_VERSION,
+                "parameters": {
+                    "minSeconds": min_seconds,
+                    "maxGapSeconds": max_gap_seconds,
+                    "densityMinDistinctTrackIds": DENSITY_MIN_DISTINCT_TRACK_IDS,
+                    "contestMinPlayersPerTeam": CONTEST_MIN_PLAYERS_PER_TEAM,
+                },
+            },
             "evidence": {"clipPath": f"clips/{event_id}.mp4"},
             "limitations": ["Uncalibrated broadcast view", "Team and track IDs are unverified"],
         })
