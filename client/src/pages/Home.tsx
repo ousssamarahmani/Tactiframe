@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
-const landingVisual = "/assets/tactiframe-stadium-tracking-hero.png";
+const landingVisual = "/assets/tactiframe-live-match-analytics.png";
 
 function Logo() {
   return (
@@ -35,16 +35,37 @@ const painPoints = [
 
 function ProductFrame() {
   return (
-    <div className="product-frame hero-frame">
-      <img src={landingVisual} alt="Football stadium with pitch-aware tracking markers" />
-      <div className="frame-overlay" />
-      <div className="hero-frame-topline"><span><span className="status-dot" /> LIVE PITCH PERCEPTION</span><span className="frame-status">Model active</span></div>
-      <div className="hero-motion-layer" aria-hidden="true">
-        <svg className="motion-routes" viewBox="0 0 1000 560" preserveAspectRatio="none"><path className="motion-route route-one" d="M180 420 C300 260 420 340 570 230 S810 170 930 245" /><path className="motion-route route-two" d="M250 140 C350 230 400 170 520 270 S750 390 855 285" /></svg>
-        <span className="motion-player player-one" /><span className="motion-player player-two" /><span className="motion-player player-three" /><span className="motion-player player-four" />
-        <span className="motion-ball" /><span className="motion-pulse pulse-one" /><span className="motion-pulse pulse-two" />
+    <div className="hero-visual-stack">
+      <figure className="product-frame hero-frame">
+        <img
+          className="hero-match-image"
+          src={landingVisual}
+          alt="TactiFrame live match analytics showing player tracking on a football pitch"
+        />
+      </figure>
+      <div
+        className="hero-motion-panel"
+        role="img"
+        aria-label="Illustrative tactical motion preview with moving player markers, a ball, and player movement paths"
+      >
+        <div className="hero-motion-label" aria-hidden="true">
+          <span>TACTICAL MOTION PREVIEW</span>
+          <strong>Illustrative player movement</strong>
+        </div>
+        <div className="hero-motion-stage" aria-hidden="true">
+          <svg className="motion-routes" viewBox="0 0 1000 180" preserveAspectRatio="none">
+            <path className="motion-route route-one" d="M80 125 C230 125 265 54 425 70 S665 140 910 48" />
+            <path className="motion-route route-two" d="M110 45 C255 88 355 142 500 106 S735 34 900 116" />
+          </svg>
+          <span className="motion-player player-one" />
+          <span className="motion-player player-two" />
+          <span className="motion-player player-three" />
+          <span className="motion-player player-four" />
+          <span className="motion-ball" />
+          <span className="motion-pulse pulse-one" />
+          <span className="motion-pulse pulse-two" />
+        </div>
       </div>
-      <div className="hero-frame-caption"><span>TRACKING LAYER / 24 PLAYERS</span><strong>Movement paths detected</strong><small>Live tactical overlay · signal confidence 92%</small></div>
     </div>
   );
 }
