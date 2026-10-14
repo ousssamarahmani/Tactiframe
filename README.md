@@ -11,6 +11,7 @@ TactiFrame is a dark sports-tech product concept for opposition analysis.
 - Clickable event timeline with evidence state changes
 - Mock Agent Vision chat and coach approval flow
 - Generated product visuals in `client/public/assets/`
+- New wide stadium tracking hero with external tactical motion overlays
 - Research-demo data only; no real CV processing yet
 
 ## Codex / engineering handoff

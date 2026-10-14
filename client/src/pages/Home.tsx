@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
-const landingVisual = "/assets/tactiframe-landing-visual.png";
+const landingVisual = "/assets/tactiframe-stadium-tracking-hero.png";
 
 function Logo() {
   return (
@@ -36,14 +36,15 @@ const painPoints = [
 function ProductFrame() {
   return (
     <div className="product-frame hero-frame">
-      <img src={landingVisual} alt="TactiFrame football analytics interface" />
+      <img src={landingVisual} alt="Football stadium with pitch-aware tracking markers" />
       <div className="frame-overlay" />
-      <div className="frame-topline"><span className="status-dot" /> NED vs JPN — Clip 02 <span className="frame-status">Processed</span></div>
-      <div className="frame-mock-grid">
-        <div className="mini-pitch"><div className="pitch-line pitch-mid" /><div className="pitch-line pitch-box left" /><div className="pitch-line pitch-box right" /><i className="player p1" /><i className="player p2" /><i className="player p3" /><i className="player p4 green" /><i className="player p5 green" /><span className="route route-a" /><span className="route route-b" /></div>
-        <div className="frame-events"><small>KEY EVENTS</small><b>Pressure <span>00:14.72</span></b><b>Zone density <span>00:29.41</span></b><b className="active">Turnover <span>00:41.36</span></b><b>Progressive pass <span>01:02.19</span></b></div>
+      <div className="hero-frame-topline"><span><span className="status-dot" /> LIVE PITCH PERCEPTION</span><span className="frame-status">Model active</span></div>
+      <div className="hero-motion-layer" aria-hidden="true">
+        <svg className="motion-routes" viewBox="0 0 1000 560" preserveAspectRatio="none"><path className="motion-route route-one" d="M180 420 C300 260 420 340 570 230 S810 170 930 245" /><path className="motion-route route-two" d="M250 140 C350 230 400 170 520 270 S750 390 855 285" /></svg>
+        <span className="motion-player player-one" /><span className="motion-player player-two" /><span className="motion-player player-three" /><span className="motion-player player-four" />
+        <span className="motion-ball" /><span className="motion-pulse pulse-one" /><span className="motion-pulse pulse-two" />
       </div>
-      <div className="frame-chat"><span>AGENT VISION</span><strong>Where are we exposed after turnovers?</strong><p>Right-channel exposure identified. Event #14 is ready for review.</p></div>
+      <div className="hero-frame-caption"><span>TRACKING LAYER / 24 PLAYERS</span><strong>Movement paths detected</strong><small>Live tactical overlay · signal confidence 92%</small></div>
     </div>
   );
 }
