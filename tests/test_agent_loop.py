@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,8 +10,16 @@ from agent.tools import ToolLayer
 
 class AgentLoopTests(unittest.TestCase):
     def setUp(self):
+        self.previous_aws_enabled = os.environ.get("AWS_ENABLED")
+        os.environ["AWS_ENABLED"] = "false"
         self.temp_root = Path(__file__).resolve().parents[1] / ".tmp"
         self.temp_root.mkdir(exist_ok=True)
+
+    def tearDown(self):
+        if self.previous_aws_enabled is None:
+            os.environ.pop("AWS_ENABLED", None)
+        else:
+            os.environ["AWS_ENABLED"] = self.previous_aws_enabled
 
     def make_run(self, root: Path, kinds: list[str]) -> Path:
         run_dir = root / "run"

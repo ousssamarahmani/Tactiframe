@@ -52,7 +52,8 @@ The offline worker builds on [TactiScout-CV](https://github.com/Marouan-balha/Ta
 | Events and evidence | `detect_events.py` writes two candidate event types, image zones, and playable clips | **Implemented; accuracy unverified** |
 | Agentic tool sequence | Six tools in `agent/tools.py`; the orchestrator changes its next call from event results and records `trace.json` | **Local run verified** |
 | Human approval | `plan.json` stays pending until a coach explicitly records approved or rejected | **Scripted path; no live coach decision yet** |
-| AWS and API | S3/Bedrock integration and FastAPI endpoints | **Not implemented** |
+| AWS evidence adapters | Private S3 sync and Bedrock evidence-bound proposal adapter; real-account validation pending | **Implemented locally** |
+| FastAPI | HTTP endpoints | **Not implemented** |
 | Public demo assets | Footage and model terms suitable for a public submission | **Not ready** |
 | MCP / NVIDIA | Optional adapters and VSS/Cosmos | **Later** |
 
@@ -113,6 +114,7 @@ For the coach-facing end state after the hackathon, see [TactiFrame Workspace](d
 | `tests/` | Perception, filtering, event, gate, and tool-order checks |
 | `docs/EVAL.md` | Measured runs and limitations |
 | `docs/CV_BASELINE.md` | Frozen pitch-aware CV reference and acceptance checks |
+| `docs/AWS_SETUP.md` | Private S3 and Bedrock setup, runtime behavior, and validation |
 | `docs/ASSETS.md` | Footage and model provenance |
 
 ## Limits, assets, and license

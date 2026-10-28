@@ -39,6 +39,10 @@ class ToolLayer:
             "hypothesis": hypothesis, "nextTool": next_tool, "reason": reason,
         })
 
+    def note_external(self, name: str, details: dict) -> None:
+        """Record a cloud adapter result without adding another public agent tool."""
+        self._record("external", name, details)
+
     def _require_run(self) -> Path:
         if self.run_dir is None:
             raise RuntimeError("Call run_perception before using session tools")
@@ -117,7 +121,8 @@ class ToolLayer:
         self._record("tool", "analyze_zone", result)
         return result
 
-    def draft_plan(self, event_id: str, clip: dict, zone_analysis: dict) -> dict:
+    def draft_plan(self, event_id: str, clip: dict, zone_analysis: dict,
+                   proposal: str | None = None, proposal_source: str = "local-template") -> dict:
         run_dir = self._require_run()
         if not self.events_listed:
             raise RuntimeError("draft_plan requires list_events in this agent run")
@@ -128,8 +133,9 @@ class ToolLayer:
             raise ValueError("Zone analysis must match the selected event")
         plan = {"schemaVersion": 1, "id": f"plan-{uuid4().hex[:8]}",
                 "status": "pending_approval", "createdAt": _now(),
-                "proposal": ("Coach: review this visual grouping and decide whether to "
-                             "investigate opponent spacing in the highlighted image zone."),
+                "proposal": proposal or ("Coach: review this visual grouping and decide whether to "
+                                          "investigate opponent spacing in the highlighted image zone."),
+                "proposalSource": proposal_source,
                 "evidence": {"eventId": event_id,
                              "eventType": event["type"],
                              "clipPath": event["evidence"]["clipPath"],

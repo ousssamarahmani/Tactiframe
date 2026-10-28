@@ -60,6 +60,6 @@ flowchart LR
     MCP[MCP adapter, P1] -. planned wrapper .-> L
 ```
 
-AWS must be meaningfully used in the actual demo, and its calls or artifacts must be visible in the trace/evaluation. FastAPI can provide upload, session, event, clip, and approval endpoints; it should delegate to the same tool layer. MCP is P1 and should wrap the same six tools without a second implementation. NVIDIA VSS/Cosmos is a later optional evidence layer, not part of the current local CV path. A full React or Next.js frontend is unnecessary for the qualifying scripted demo.
+The local adapters in `aws/storage.py` and `agent/bedrock.py` now upload private session evidence and generate an evidence-bound coach-review proposal after an OpenCV event is selected. Their real-account validation remains outstanding; see [AWS_SETUP.md](AWS_SETUP.md). FastAPI can provide upload, session, event, clip, and approval endpoints; it should delegate to the same tool layer. MCP is P1 and should wrap the same six tools without a second implementation. NVIDIA VSS/Cosmos is a later optional evidence layer, not part of the current local CV path. A full React or Next.js frontend is unnecessary for the qualifying scripted demo.
 
 The [hackathon checklist](HACKATHON.md) is a target plan, including ideas that are not yet implemented. It should not be read as a list of files already shipped.
