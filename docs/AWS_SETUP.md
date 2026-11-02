@@ -18,7 +18,7 @@ AWS_ENABLED=true
 AWS_REGION=eu-north-1
 AWS_PROFILE=default
 S3_BUCKET=tactiframe-sessions-134866241746-eu-north-1
-BEDROCK_MODEL_ID=openai.gpt-5.5
+BEDROCK_MODEL_ID=eu.amazon.nova-pro-v1:0
 ```
 
 The selected Bedrock model ID must be enabled and available in the configured Region. Confirm it in the Bedrock Model Catalog before a real run. Do not commit `.env`, credentials, video, model weights, or sessions.
