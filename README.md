@@ -7,12 +7,13 @@
 <p align="center">
   <a href="docs/EVAL.md"><img alt="OpenCV 5 local run verified" src="https://img.shields.io/badge/OpenCV%205-local%20run%20verified-2ea44f" /></a>
   <a href="docs/AGENT_LOOP.md"><img alt="Agent loop locally tested" src="https://img.shields.io/badge/agent%20loop-local%20trace%20tested-2ea44f" /></a>
-  <a href="docs/HACKATHON.md"><img alt="AWS integration pending" src="https://img.shields.io/badge/AWS-integration%20pending-orange" /></a>
+  <a href="docs/AWS_SETUP.md"><img alt="AWS session validated" src="https://img.shields.io/badge/AWS-S3%20%2B%20Bedrock%20validated-2ea44f" /></a>
+  <a href="docs/API.md"><img alt="Review API implemented" src="https://img.shields.io/badge/review%20API-implemented-2ea44f" /></a>
 </p>
 
 > **The banner is concept artwork.** It depicts planned AWS and NVIDIA capabilities. The status table below says what this repository implements today.
 
-[Why TactiFrame](#why-tactiframe) · [How it works](#how-it-works) · [Build status](#build-status) · [Run locally](#run-locally) · [Agentic Vision proof](#agentic-vision-proof) · [Roadmap](#roadmap)
+[Why TactiFrame](#why-tactiframe) · [How it works](#how-it-works) · [Build status](#build-status) · [Run locally](#run-locally) · [Review API](docs/API.md) · [Roadmap](#roadmap)
 
 ---
 
@@ -20,7 +21,7 @@
 
 Opposition analysis needs a link between a claim and the match moment behind it. TactiFrame processes a short football clip, groups **candidate** visual events by image zone, opens evidence clips, and drafts a question for a coach to review. The coach decides whether the proposed analysis should be used.
 
-TactiFrame targets the **OpenCV AI Competition 2026 — Agentic Vision with AWS** track. Video results must change the runtime's next tool call, plan, action, or approval request. Using an AI assistant to write code does not satisfy that requirement.
+TactiFrame is an evidence-backed football-analysis MVP. Video results change the runtime's next tool call, plan, action, or approval request; a coach remains responsible for accepting or rejecting a draft.
 
 | See | Understand | Decide | Act with a coach |
 |---|---|---|---|
@@ -52,12 +53,12 @@ The offline worker builds on [TactiScout-CV](https://github.com/Marouan-balha/Ta
 | Events and evidence | `detect_events.py` writes two candidate event types, image zones, and playable clips | **Implemented; accuracy unverified** |
 | Agentic tool sequence | Six tools in `agent/tools.py`; the orchestrator changes its next call from event results and records `trace.json` | **Local run verified** |
 | Human approval | `plan.json` stays pending until a coach explicitly records approved or rejected | **Scripted path; no live coach decision yet** |
-| AWS evidence adapters | Private S3 sync and Bedrock evidence-bound proposal adapter; real-account validation pending | **Implemented locally** |
-| FastAPI | HTTP endpoints | **Not implemented** |
+| AWS evidence adapters | Private S3 sync and a Nova Pro evidence-bound proposal adapter | **Real-account session validated** |
+| FastAPI review API | Session, events, trace, plan, and validated approval endpoints | **Implemented and tested** |
 | Public demo assets | Footage and model terms suitable for a public submission | **Not ready** |
 | MCP / NVIDIA | Optional adapters and VSS/Cosmos | **Later** |
 
-**Measured local check:** On the same 2½-minute clip, a manual polygon reduced final track observations from 13,206 to 11,760 and removed a known false sideline event near 125 seconds. The cleaned run produced 35 candidate events and clips. The earlier event mix made the agent call `get_clip` next; the polygon run made it call `analyze_zone` next. Both traces end at a pending approval request. These are local A/B observations, not labeled accuracy scores or a completed AWS demo. See [evaluation](docs/EVAL.md), [field polygon review](docs/FIELD_POLYGON.md), and [agent trace review](docs/AGENT_LOOP.md).
+**Measured local check:** On the same 2½-minute clip, a manual polygon reduced final track observations from 13,206 to 11,760 and removed a known false sideline event near 125 seconds. The cleaned run produced 35 candidate events and clips. The earlier event mix made the agent call `get_clip` next; the polygon run made it call `analyze_zone` next. The validated AWS run uploaded 35 evidence clips plus session JSON artifacts to private S3 and used Nova Pro to draft a pending coach-review plan. These are local A/B observations, not labeled tactical accuracy scores. See [evaluation](docs/EVAL.md), [field polygon review](docs/FIELD_POLYGON.md), and [agent trace review](docs/AGENT_LOOP.md).
 
 ## Run locally
 
@@ -84,23 +85,23 @@ After a coach reviews the plan and source clip, record their actual decision:
 .\.venv\Scripts\python approve_plan.py --run-dir data\sessions\demo-run --decision approved --coach "Coach Name"
 ```
 
-Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (24 passed in the last checked environment).
+Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (30 focused tests passed in the last checked environment).
+
+### Review through HTTP
+
+Start the local review API with `.\.venv\Scripts\uvicorn api.main:app --host 127.0.0.1 --port 8000`. It exposes session metadata, candidate events, trace, plan, and the same explicit coach-approval gate used by the CLI. See the [API guide](docs/API.md).
 
 ## Agentic Vision proof
 
-The qualification check is visible in `trace.json`: `run_perception` → `list_events` → a recorded choice → `get_clip` **or** `analyze_zone` → `draft_plan` → `request_approval`. `draft_plan` refuses to run until `list_events` was called in that session.
-
-Two real local runs took different next steps because their OpenCV-derived candidate event counts differed. The [trace walkthrough](docs/AGENT_LOOP.md) records both sequences. This establishes a local perception → decision → approval-request loop. AWS integration, reviewed tactical evidence, and a publicly usable demo clip remain submission work.
+The proof is visible in `trace.json`: `run_perception` → `list_events` → a recorded choice → `get_clip` **or** `analyze_zone` → `draft_plan` → `request_approval`. `draft_plan` refuses to run until `list_events` was called in that session. A successful Nova Pro proposal is recorded only after OpenCV selects the event and evidence clip.
 
 ## Roadmap
 
-1. **P0:** Review event quality on the chosen clip; secure public demo footage and document model provenance.
-2. **P0:** Connect the tools to meaningful AWS storage and/or Bedrock use, add the FastAPI demo path, and verify the full workflow.
-3. **P0:** Record a real coach decision, complete end-to-end evaluation, and prepare evidence before the 26 October 2026 deadline.
-4. **P1:** MCP wrapper around the same six tools and light judge-facing polish.
-5. **P2:** NVIDIA VSS/Cosmos only after P0 works. React or Next.js is not required for qualification.
-
-The [hackathon checklist](docs/HACKATHON.md) is a target specification; the table above records current implementation.
+1. **MVP:** Add API integration coverage and a scripted session → approval demonstration.
+2. **MVP:** Measure CV failure modes and improve pitch handling, tracking, and ball candidates only where the metrics justify it.
+3. **MVP:** Add a minimal evidence-review workspace on top of the API.
+4. **Later:** Evidence-bound Q&A and plan-versus-reality comparison.
+5. **Later:** MCP, NVIDIA, and multi-session capabilities only after the single-session workflow is reliable.
 
 For the coach-facing end state after the hackathon, see [TactiFrame Workspace](docs/PRODUCT_WORKSPACE.md): an evidence-bound Agent Vision Chat and light session/events/plan workspace that reuses this pipeline rather than bypassing it.
 
@@ -111,6 +112,7 @@ For the coach-facing end state after the hackathon, see [TactiFrame Workspace](d
 | `run_pipeline.py`, `cv/` | OpenCV observation, pitch filtering, tracking, and zones |
 | `detect_events.py`, `cv/event_detector.py` | Candidate events and evidence clips |
 | `agent/`, `run_agent.py`, `approve_plan.py` | Six-tool local loop, trace, and coach decision |
+| `api/`, `docs/API.md` | Local review API and HTTP approval workflow |
 | `tests/` | Perception, filtering, event, gate, and tool-order checks |
 | `docs/EVAL.md` | Measured runs and limitations |
 | `docs/CV_BASELINE.md` | Frozen pitch-aware CV reference and acceptance checks |

@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import config
 from agent.orchestrator import run_agent
 from agent.tools import ToolLayer
 
@@ -11,7 +12,9 @@ from agent.tools import ToolLayer
 class AgentLoopTests(unittest.TestCase):
     def setUp(self):
         self.previous_aws_enabled = os.environ.get("AWS_ENABLED")
+        self.previous_config_aws_enabled = config.AWS_ENABLED
         os.environ["AWS_ENABLED"] = "false"
+        config.AWS_ENABLED = False
         self.temp_root = Path(__file__).resolve().parents[1] / ".tmp"
         self.temp_root.mkdir(exist_ok=True)
 
@@ -20,6 +23,7 @@ class AgentLoopTests(unittest.TestCase):
             os.environ.pop("AWS_ENABLED", None)
         else:
             os.environ["AWS_ENABLED"] = self.previous_aws_enabled
+        config.AWS_ENABLED = self.previous_config_aws_enabled
 
     def make_run(self, root: Path, kinds: list[str]) -> Path:
         run_dir = root / "run"
