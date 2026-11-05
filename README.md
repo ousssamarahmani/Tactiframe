@@ -13,7 +13,7 @@
 
 > **The banner is concept artwork.** It depicts planned AWS and NVIDIA capabilities. The status table below says what this repository implements today.
 
-[Why TactiFrame](#why-tactiframe) · [How it works](#how-it-works) · [Build status](#build-status) · [Run locally](#run-locally) · [Review API](docs/API.md) · [Roadmap](#roadmap)
+[Why TactiFrame](#why-tactiframe) · [How it works](#how-it-works) · [Build status](#build-status) · [Run locally](#run-locally) · [Review API](docs/API.md) · [Demo](docs/DEMO.md) · [Roadmap](#roadmap)
 
 ---
 
@@ -85,11 +85,15 @@ After a coach reviews the plan and source clip, record their actual decision:
 .\.venv\Scripts\python approve_plan.py --run-dir data\sessions\demo-run --decision approved --coach "Coach Name"
 ```
 
-Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (30 focused tests passed in the last checked environment).
+Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (31 focused tests passed in the last checked environment).
 
 ### Review through HTTP
 
 Start the local review API with `.\.venv\Scripts\uvicorn api.main:app --host 127.0.0.1 --port 8000`. It exposes session metadata, candidate events, trace, plan, and the same explicit coach-approval gate used by the CLI. See the [API guide](docs/API.md).
+
+### Repeatable coach-review demo
+
+For one complete session → evidence → proposal → named-decision path, run [demo.ps1](demo.ps1) with a completed session, a coach name, and an explicit `approved` or `rejected` decision. See the [demo guide](docs/DEMO.md).
 
 ## Agentic Vision proof
 
@@ -113,6 +117,7 @@ For the coach-facing end state after the hackathon, see [TactiFrame Workspace](d
 | `detect_events.py`, `cv/event_detector.py` | Candidate events and evidence clips |
 | `agent/`, `run_agent.py`, `approve_plan.py` | Six-tool local loop, trace, and coach decision |
 | `api/`, `docs/API.md` | Local review API and HTTP approval workflow |
+| `demo.ps1`, `docs/DEMO.md` | Repeatable agent → review API → explicit coach-decision demonstration |
 | `tests/` | Perception, filtering, event, gate, and tool-order checks |
 | `docs/EVAL.md` | Measured runs and limitations |
 | `docs/CV_BASELINE.md` | Frozen pitch-aware CV reference and acceptance checks |
