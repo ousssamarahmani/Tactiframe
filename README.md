@@ -101,11 +101,13 @@ The proof is visible in `trace.json`: `run_perception` → `list_events` → a r
 
 ## Roadmap
 
-1. **MVP:** Add API integration coverage and a scripted session → approval demonstration.
-2. **MVP:** Measure CV failure modes and improve pitch handling, tracking, and ball candidates only where the metrics justify it.
-3. **MVP:** Add a minimal evidence-review workspace on top of the API.
-4. **Later:** Evidence-bound Q&A and plan-versus-reality comparison.
-5. **Later:** MCP, NVIDIA, and multi-session capabilities only after the single-session workflow is reliable.
+The perception → events → tools → trace → approval path, S3/Bedrock integration, review API, and scripted demo are complete. The current implementation task list is:
+
+1. **Next — Evaluation harness:** Write `evaluation.json` for each completed session, measure perception/event/evidence/agent outcomes, and run synthetic scenario checks: density-first, contest-first, no-events, and missing evidence. The harness must verify that vision changes tool order and that unsupported plans are never drafted.
+2. **MVP — Targeted CV iteration:** Use the harness metrics to improve pitch handling, track continuity, and ball candidates only where the measurements justify it.
+3. **MVP — Evidence-review workspace:** Add a minimal coach-facing surface on top of the existing API once the harness establishes a stable baseline.
+4. **Later — Evidence-bound Q&A and plan-versus-reality:** Support coach questions and compare a structured pre-match plan with observed events, while preserving event and clip references.
+5. **Later — MCP, NVIDIA, and multi-session capabilities:** Add these only after the single-session workflow is reliable and measured.
 
 For the coach-facing end state after the hackathon, see [TactiFrame Workspace](docs/PRODUCT_WORKSPACE.md): an evidence-bound Agent Vision Chat and light session/events/plan workspace that reuses this pipeline rather than bypassing it.
 
