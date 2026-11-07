@@ -2,7 +2,7 @@
 
 ## Structural evaluation harness
 
-The current evaluation harness writes `evaluation.json` for a completed session. On the local pitch-polygon session it recorded 750 frames, 11,760 track observations, 87 unique player IDs, 236 unverified ball candidates, 4,312 off-pitch rejections, 35 candidate events, and 35/35 locally available evidence clips. It also confirmed the vision result selected `analyze_zone` as the next tool, that the plan cited `evt-0002` and its clip, and that the plan remained pending explicit coach approval. This is a structural consistency report, not a labeled accuracy score. See [EVALUATION_HARNESS.md](EVALUATION_HARNESS.md).
+The current evaluation harness writes `evaluation.json` for a completed session. On the local pitch-polygon session it recorded 750 frames, 11,760 track observations, 87 unique player IDs, 236 raw ball candidates, 163 conservative validated candidates, 4,312 off-pitch rejections, 35 candidate events, and 35/35 locally available evidence clips. The validator rejected 50 low-confidence and 23 sustained static-position candidates, while flagging 19 large jumps for review. The harness also confirmed the vision result selected `analyze_zone` as the next tool, that the plan cited `evt-0002` and its clip, and that the plan remained pending explicit coach approval. These are structural quality signals, not labeled accuracy scores. See [EVALUATION_HARNESS.md](EVALUATION_HARNESS.md).
 
 ## Verified in this checkout
 

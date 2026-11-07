@@ -33,7 +33,7 @@ class EvaluationHarnessTests(unittest.TestCase):
         (run_dir / "clips").mkdir(parents=True)
         (run_dir / "run.json").write_text(json.dumps({
             "runId": name, "status": "observations-only",
-            "video": {"frames": 150},
+            "video": {"frames": 150, "fps": 5.0},
             "counts": {"trackObservations": 400, "uniquePlayerIds": 22, "ballObservations": 16},
             "filterRejections": {"off_pitch_rejected": 12},
             "environment": {"opencv": "5.0.0"},
@@ -89,6 +89,20 @@ class EvaluationHarnessTests(unittest.TestCase):
         self.assertFalse(report["passed"])
         self.assertFalse(next(check for check in report["checks"]
                               if check["name"] == "candidate_events_have_local_evidence")["passed"])
+
+    def test_reports_track_continuity_diagnostics(self):
+        run_dir = self.make_run("continuity", [])
+        (run_dir / "tracks.json").write_text(json.dumps([
+            {"frame": 0, "track_id": 1}, {"frame": 1, "track_id": 1},
+            {"frame": 0, "track_id": 2}, {"frame": 0, "track_id": 2},
+        ]))
+        run = json.loads((run_dir / "run.json").read_text())
+        run["outputs"] = {"tracks": "tracks.json"}
+        (run_dir / "run.json").write_text(json.dumps(run))
+        metrics = evaluate_session(run_dir, write=False)["metrics"]["trackContinuity"]
+        self.assertTrue(metrics["available"])
+        self.assertEqual(metrics["duplicateFrameTrackPairs"], 1)
+        self.assertEqual(metrics["shortTracksAtOrBelowOneSecond"], 2)
 
 
 if __name__ == "__main__":

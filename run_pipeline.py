@@ -34,6 +34,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", type=Path, required=True, help="Football YOLO weights with ball=0, goalkeeper=1, player=2, referee=3")
     parser.add_argument("--output-dir", type=Path, default=None, help="New run directory; default: data/sessions/<run-id>")
     parser.add_argument("--ball-conf", type=float, default=0.15)
+    parser.add_argument("--ball-validation-conf", type=float, default=0.20,
+                        help="Conservative post-detection confidence floor for ball candidates")
     parser.add_argument("--player-conf", type=float, default=0.30)
     parser.add_argument("--imgsz", type=int, default=960)
     parser.add_argument("--iou", type=float, default=0.5)
@@ -53,8 +55,9 @@ def main() -> int:
         raise FileNotFoundError(f"Video does not exist: {args.video}")
     if not args.model.is_file():
         raise FileNotFoundError(f"Model does not exist: {args.model}")
-    if not (0 < args.ball_conf <= 1 and 0 < args.player_conf <= 1 and 0 < args.iou <= 1):
-        raise ValueError("--ball-conf, --player-conf, and --iou must be in (0, 1]")
+    if not (0 < args.ball_conf <= 1 and 0 < args.ball_validation_conf <= 1
+            and 0 < args.player_conf <= 1 and 0 < args.iou <= 1):
+        raise ValueError("--ball-conf, --ball-validation-conf, --player-conf, and --iou must be in (0, 1]")
     if args.imgsz < 32 or args.min_player_height < 1:
         raise ValueError("--imgsz must be >= 32 and --min-player-height must be positive")
     if args.sample_frames < 1:
@@ -98,6 +101,7 @@ def main() -> int:
         "video": {"path": str(args.video.resolve()), "checksum": video_hash, "frames": frame_count, "fps": fps},
         "model": {"path": str(args.model.resolve()), "name": args.model.name, "checksum": model_hash},
         "parameters": {"confidence": min(args.ball_conf, args.player_conf), "ballConfidence": args.ball_conf,
+                       "ballValidationConfidence": args.ball_validation_conf,
                        "playerConfidence": args.player_conf, "imgsz": args.imgsz, "iou": args.iou,
                        "minPlayerHeight": args.min_player_height, "pitchMask": not args.no_pitch_mask,
                        "tracker": "supervision.ByteTrack", "device": args.device or "auto",
@@ -130,6 +134,11 @@ def main() -> int:
             raise RuntimeError("Tracker did not produce an annotated video")
         write_json(output_dir / "tracks.json", tracks)
         write_json(output_dir / "ball_observations.json", ball_observations)
+        from cv.ball_validation import validate_ball_candidates
+        validated_balls, ball_validation = validate_ball_candidates(
+            ball_observations, min_confidence=args.ball_validation_conf,
+        )
+        write_json(output_dir / "ball_candidates_validated.json", validated_balls)
 
         classifier = TeamClassifier()
         cap = cv2.VideoCapture(str(args.video))
@@ -172,6 +181,7 @@ def main() -> int:
             "tracks": "tracks.json",
             "tracksWithTeams": "tracks_with_teams.json",
             "ballObservations": "ball_observations.json",
+            "validatedBallCandidates": "ball_candidates_validated.json",
             "annotatedVideo": "tracked.mp4",
         }
         metadata["quality"]["teamCalibration"] = "available" if calibrated else "unavailable"
@@ -183,8 +193,10 @@ def main() -> int:
             "trackObservations": len(tracks),
             "uniquePlayerIds": len({track["track_id"] for track in tracks}),
             "ballObservations": len(ball_observations),
+            "validatedBallCandidates": len(validated_balls),
             "teamAssignments": dict(Counter(final_teams.values())),
         }
+        metadata["ballValidation"] = ball_validation
         write_json(output_dir / "run.json", metadata)
         print(f"TactiFrame run: {output_dir}")
         print(json.dumps(metadata["counts"], indent=2))

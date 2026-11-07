@@ -13,9 +13,17 @@ Run the agent first, then evaluate the same session:
 
 The command writes `data/sessions/your-session/evaluation.json` and returns exit code `0` only when the structural checks pass.
 
+For an already-completed run, validate raw ball candidates without re-running perception:
+
+```powershell
+.\.venv\Scripts\python validate_ball_candidates.py --run-dir data\sessions\your-session
+```
+
+This writes `ball_candidates_validated.json` and updates local `run.json` counts. It removes only low-confidence and sustained static-image candidates; it flags large trajectory jumps for review and does not interpolate, infer possession, or claim a verified ball path.
+
 ## What it measures
 
-- perception counts: frames, observations, player IDs, ball candidates, and off-pitch rejections;
+- perception counts: frames, observations, player IDs, ball candidates, off-pitch rejections, duplicate frame/track IDs, and short-track share;
 - candidate event totals by type and image-relative zone;
 - mean detector-rule confidence and local evidence-clip availability;
 - the actual agent tool order and whether each recorded vision decision selected the next tool used;

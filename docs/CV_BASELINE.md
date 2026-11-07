@@ -23,7 +23,7 @@ Use one fixed clip and a polygon calibration made for that exact clip. The comma
 ## Acceptance checks
 
 - `run.json` reports OpenCV 5 and `pitchCalibration: manual-image-polygon`.
-- `tracks.json`, `tracks_with_teams.json`, `ball_observations.json`, and `tracked.mp4` are nonempty.
+- `tracks.json`, `tracks_with_teams.json`, `ball_observations.json`, `ball_candidates_validated.json`, and `tracked.mp4` are nonempty.
 - No duplicate `(frame, track_id)` pair exists.
 - `events.json` and its evidence clips open after event export.
 - The trace shows `list_events` before `draft_plan`, and a plan remains pending until a coach records an explicit decision.

@@ -37,6 +37,35 @@ def _trace_tool_order_check(steps: list[dict]) -> dict:
     )
 
 
+def _track_continuity_metrics(run_dir: Path, run: dict) -> dict:
+    tracks_path = run_dir / run.get("outputs", {}).get("tracks", "tracks.json")
+    tracks = _read_json(tracks_path, [])
+    if not tracks:
+        return {"available": False}
+    by_id = {}
+    pairs = set()
+    duplicates = 0
+    for track in tracks:
+        track_id, frame = track.get("track_id"), track.get("frame")
+        if track_id is None or frame is None:
+            continue
+        key = (frame, track_id)
+        duplicates += key in pairs
+        pairs.add(key)
+        by_id.setdefault(track_id, []).append(frame)
+    lengths = sorted(len(frames) for frames in by_id.values())
+    fps = run.get("video", {}).get("fps") or 1
+    median_length = lengths[len(lengths) // 2] if lengths else 0
+    return {
+        "available": True,
+        "duplicateFrameTrackPairs": duplicates,
+        "meanObservationsPerId": round(sum(lengths) / len(lengths), 2) if lengths else 0,
+        "medianObservationsPerId": median_length,
+        "shortTracksAtOrBelowOneSecond": sum(length <= fps for length in lengths),
+        "shortTrackShare": round(sum(length <= fps for length in lengths) / len(lengths), 3) if lengths else 0,
+    }
+
+
 def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
     """Measure a completed session without claiming tactical accuracy.
 
@@ -48,6 +77,10 @@ def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
     events = _read_json(run_dir / "events.json", [])
     trace = _read_json(run_dir / "trace.json", {})
     plan = _read_json(run_dir / "plan.json", None)
+    ball_validation = _read_json(
+        run_dir / run.get("outputs", {}).get("validatedBallCandidates", "ball_candidates_validated.json"),
+        {},
+    )
 
     event_types = Counter(event.get("type", "unknown") for event in events)
     zones = Counter(event.get("zone", {}).get("id", "unknown") for event in events)
@@ -103,6 +136,9 @@ def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
             "trackObservations": run.get("counts", {}).get("trackObservations"),
             "uniquePlayerIds": run.get("counts", {}).get("uniquePlayerIds"),
             "ballObservations": run.get("counts", {}).get("ballObservations"),
+            "validatedBallCandidates": run.get("counts", {}).get("validatedBallCandidates"),
+            "ballValidation": run.get("ballValidation", {"available": bool(ball_validation)}),
+            "trackContinuity": _track_continuity_metrics(run_dir, run),
             "offPitchRejected": run.get("filterRejections", {}).get("off_pitch_rejected"),
             "candidateEvents": len(events),
             "eventsByType": dict(event_types),
