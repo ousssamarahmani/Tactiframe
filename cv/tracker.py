@@ -25,7 +25,10 @@ TRACK_CLASSES = [PLAYER_CLASS, GOALKEEPER_CLASS]
 class PlayerTracker:
     def __init__(self, model_path='models/best.pt', conf=0.15, device=None,
                  player_conf=0.30, ball_conf=0.15, imgsz=960, iou=0.5,
-                 min_player_height=10, use_pitch_mask=True, field_polygon=None):
+                 min_player_height=10, use_pitch_mask=True, field_polygon=None,
+                 track_activation_threshold=0.20, lost_track_buffer_seconds=5.0,
+                 merge_proximity_gap_seconds=8.0, merge_proximity_distance=250.0,
+                 merge_appearance_gap_seconds=20.0, merge_appearance_color_distance=55.0):
         self.model = YOLO(model_path)
         self.conf = conf
         self.device = device
@@ -36,6 +39,12 @@ class PlayerTracker:
         self.min_player_height = min_player_height
         self.use_pitch_mask = use_pitch_mask
         self.field_polygon = field_polygon
+        self.track_activation_threshold = track_activation_threshold
+        self.lost_track_buffer_seconds = lost_track_buffer_seconds
+        self.merge_proximity_gap_seconds = merge_proximity_gap_seconds
+        self.merge_proximity_distance = merge_proximity_distance
+        self.merge_appearance_gap_seconds = merge_appearance_gap_seconds
+        self.merge_appearance_color_distance = merge_appearance_color_distance
         self.filter_counts = Counter()
 
     def track_video(self, video_path, output_path='output/tracked_v5.mp4'):
@@ -52,9 +61,15 @@ class PlayerTracker:
         # === PASS 2: Merge fragments ===
         print("\n=== PASS 2: Merging Fragments ===")
         tracking_data = self._filter_short_tracks(raw_tracking, min_frames=int(fps))
-        tracking_data = self._merge_by_proximity(tracking_data, max_gap=int(fps * 8), max_distance=250)
+        tracking_data = self._merge_by_proximity(
+            tracking_data, max_gap=int(fps * self.merge_proximity_gap_seconds),
+            max_distance=self.merge_proximity_distance,
+        )
         self._assert_unique_frame_ids(tracking_data, "proximity merge")
-        tracking_data = self._merge_by_appearance(tracking_data, track_colors, max_gap=int(fps * 20))
+        tracking_data = self._merge_by_appearance(
+            tracking_data, track_colors, max_gap=int(fps * self.merge_appearance_gap_seconds),
+            color_distance=self.merge_appearance_color_distance,
+        )
         self._assert_unique_frame_ids(tracking_data, "appearance merge")
 
         # === PASS 3: Write annotated video ===
@@ -81,8 +96,8 @@ class PlayerTracker:
         ball_positions = []
         track_colors = defaultdict(list)
 
-        tracker = sv.ByteTrack(track_activation_threshold=0.20,
-                               lost_track_buffer=max(30, int(fps * 5)),
+        tracker = sv.ByteTrack(track_activation_threshold=self.track_activation_threshold,
+                               lost_track_buffer=max(30, int(fps * self.lost_track_buffer_seconds)),
                                frame_rate=max(1, round(fps)))
         track_options = {'source': video_path, 'conf': self.conf, 'iou': self.iou,
                          'imgsz': self.imgsz, 'stream': True, 'verbose': False}
@@ -244,7 +259,7 @@ class PlayerTracker:
         print(f"  Proximity merge: {len(merge_map)} merged → {final} unique IDs")
         return merged
 
-    def _merge_by_appearance(self, tracking_data, track_colors, max_gap=250):
+    def _merge_by_appearance(self, tracking_data, track_colors, max_gap=250, color_distance=55.0):
         """Merge tracks with similar jersey color that don't overlap in time."""
         if not tracking_data or not track_colors:
             return tracking_data
@@ -290,7 +305,7 @@ class PlayerTracker:
                     continue
 
                 color_dist = np.linalg.norm(anchor_color - cand_color)
-                if color_dist < 55.0:
+                if color_dist < color_distance:
                     merge_map[candidate] = anchor
                     anchor_frames.update(track_frames[candidate])
                     anchor_start = min(anchor_start, cand_start)

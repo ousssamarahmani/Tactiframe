@@ -21,6 +21,14 @@ For an already-completed run, validate raw ball candidates without re-running pe
 
 This writes `ball_candidates_validated.json` and updates local `run.json` counts. It removes only low-confidence and sustained static-image candidates; it flags large trajectory jumps for review and does not interpolate, infer possession, or claim a verified ball path.
 
+For descriptive ID-churn windows, run:
+
+```powershell
+.\.venv\Scripts\python diagnose_tracks.py --run-dir data\sessions\your-session --window-seconds 30
+```
+
+It writes `track_diagnostics.json`. These are not ID-switch scores: label continuous player passages before claiming identity accuracy.
+
 ## What it measures
 
 - perception counts: frames, observations, player IDs, ball candidates, off-pitch rejections, duplicate frame/track IDs, and short-track share;

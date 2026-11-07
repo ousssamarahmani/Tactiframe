@@ -46,6 +46,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default=None, help="Inference device, for example cpu or cuda:0")
     parser.add_argument("--sample-frames", type=int, default=25)
     parser.add_argument("--calibration-frame", type=int, default=None)
+    parser.add_argument("--track-activation-threshold", type=float, default=0.20)
+    parser.add_argument("--lost-track-buffer-seconds", type=float, default=5.0)
+    parser.add_argument("--merge-proximity-gap-seconds", type=float, default=8.0)
+    parser.add_argument("--merge-proximity-distance", type=float, default=250.0)
+    parser.add_argument("--merge-appearance-gap-seconds", type=float, default=20.0)
+    parser.add_argument("--merge-appearance-color-distance", type=float, default=55.0)
     return parser.parse_args()
 
 
@@ -62,6 +68,10 @@ def main() -> int:
         raise ValueError("--imgsz must be >= 32 and --min-player-height must be positive")
     if args.sample_frames < 1:
         raise ValueError("--sample-frames must be positive")
+    if not (0 < args.track_activation_threshold <= 1 and args.lost_track_buffer_seconds > 0
+            and args.merge_proximity_gap_seconds > 0 and args.merge_proximity_distance > 0
+            and args.merge_appearance_gap_seconds > 0 and args.merge_appearance_color_distance > 0):
+        raise ValueError("Tracker tuning values must be positive; activation threshold must be in (0, 1]")
 
     import cv2
     import torch
@@ -105,7 +115,13 @@ def main() -> int:
                        "playerConfidence": args.player_conf, "imgsz": args.imgsz, "iou": args.iou,
                        "minPlayerHeight": args.min_player_height, "pitchMask": not args.no_pitch_mask,
                        "tracker": "supervision.ByteTrack", "device": args.device or "auto",
-                       "sampleFrames": args.sample_frames},
+                       "sampleFrames": args.sample_frames,
+                       "trackActivationThreshold": args.track_activation_threshold,
+                       "lostTrackBufferSeconds": args.lost_track_buffer_seconds,
+                       "mergeProximityGapSeconds": args.merge_proximity_gap_seconds,
+                       "mergeProximityDistance": args.merge_proximity_distance,
+                       "mergeAppearanceGapSeconds": args.merge_appearance_gap_seconds,
+                       "mergeAppearanceColorDistance": args.merge_appearance_color_distance},
         "environment": {"python": platform.python_version(), "opencv": cv2.__version__,
                         "ultralytics": ultralytics.__version__, "torch": torch.__version__},
         "outputs": {},
@@ -123,7 +139,13 @@ def main() -> int:
                                 ball_conf=args.ball_conf, imgsz=args.imgsz, iou=args.iou,
                                 min_player_height=args.min_player_height,
                                 use_pitch_mask=not args.no_pitch_mask,
-                                field_polygon=field_polygon)
+                                field_polygon=field_polygon,
+                                track_activation_threshold=args.track_activation_threshold,
+                                lost_track_buffer_seconds=args.lost_track_buffer_seconds,
+                                merge_proximity_gap_seconds=args.merge_proximity_gap_seconds,
+                                merge_proximity_distance=args.merge_proximity_distance,
+                                merge_appearance_gap_seconds=args.merge_appearance_gap_seconds,
+                                merge_appearance_color_distance=args.merge_appearance_color_distance)
         checkpoint_args = (tracker.model.ckpt or {}).get("train_args", {})
         architecture = tracker.model.model.yaml.get("yaml_file") or checkpoint_args.get("model")
         metadata["model"]["architecture"] = Path(architecture).name if architecture else "unknown"
