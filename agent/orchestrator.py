@@ -53,13 +53,21 @@ def run_agent(tools: ToolLayer, **perception_input) -> dict:
     if contest_first:
         tools.note_decision("Two-team visual contest", "get_clip",
                             f"Vision found {counts['zone_contest']} contest and {counts['zone_density']} density candidates")
-        clip = tools.get_clip(event["id"])
+        try:
+            clip = tools.get_clip(event["id"])
+        except RuntimeError as error:
+            tools.note_decision("Evidence clip unavailable", "stop", str(error))
+            return {"run": summary, "selectedEvent": event["id"], "status": "evidence_unavailable"}
         zone = tools.analyze_zone(zone_id)
     else:
         tools.note_decision("Sustained image-zone density", "analyze_zone",
                             f"Vision found {counts['zone_density']} density and {counts['zone_contest']} contest candidates")
         zone = tools.analyze_zone(zone_id)
-        clip = tools.get_clip(event["id"])
+        try:
+            clip = tools.get_clip(event["id"])
+        except RuntimeError as error:
+            tools.note_decision("Evidence clip unavailable", "stop", str(error))
+            return {"run": summary, "selectedEvent": event["id"], "status": "evidence_unavailable"}
     bedrock = _bedrock_proposal(tools, event, clip, zone)
     plan = tools.draft_plan(
         event["id"], clip, zone,

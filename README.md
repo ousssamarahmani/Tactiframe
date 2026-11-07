@@ -85,7 +85,7 @@ After a coach reviews the plan and source clip, record their actual decision:
 .\.venv\Scripts\python approve_plan.py --run-dir data\sessions\demo-run --decision approved --coach "Coach Name"
 ```
 
-Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (31 focused tests passed in the last checked environment).
+Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (35 focused tests passed in the last checked environment).
 
 ### Review through HTTP
 
@@ -120,8 +120,9 @@ For the coach-facing end state after the hackathon, see [TactiFrame Workspace](d
 | `agent/`, `run_agent.py`, `approve_plan.py` | Six-tool local loop, trace, and coach decision |
 | `api/`, `docs/API.md` | Local review API and HTTP approval workflow |
 | `demo.ps1`, `docs/DEMO.md` | Repeatable agent → review API → explicit coach-decision demonstration |
-| `tests/` | Perception, filtering, event, gate, and tool-order checks |
+| `tests/` | Perception, filtering, event, gate, tool-order, and evaluation-harness checks |
 | `docs/EVAL.md` | Measured runs and limitations |
+| `evaluate_session.py`, `docs/EVALUATION_HARNESS.md` | Per-session `evaluation.json` and repeatable scenario checks |
 | `docs/CV_BASELINE.md` | Frozen pitch-aware CV reference and acceptance checks |
 | `docs/AWS_SETUP.md` | Private S3 and Bedrock setup, runtime behavior, and validation |
 | `docs/ASSETS.md` | Footage and model provenance |

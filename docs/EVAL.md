@@ -1,5 +1,9 @@
 # TactiFrame evaluation status
 
+## Structural evaluation harness
+
+The current evaluation harness writes `evaluation.json` for a completed session. On the local pitch-polygon session it recorded 750 frames, 11,760 track observations, 87 unique player IDs, 236 unverified ball candidates, 4,312 off-pitch rejections, 35 candidate events, and 35/35 locally available evidence clips. It also confirmed the vision result selected `analyze_zone` as the next tool, that the plan cited `evt-0002` and its clip, and that the plan remained pending explicit coach approval. This is a structural consistency report, not a labeled accuracy score. See [EVALUATION_HARNESS.md](EVALUATION_HARNESS.md).
+
 ## Verified in this checkout
 
 The observation worker completed a full-duration technical run on a supplied 4-minute-15-second match segment. It processed a 5 fps working copy of all 7,661 source frames (1,277 sampled frames), wrote five nonempty run files, and produced a playable annotated video with 1,277 frames. The run folder is `data/sessions/match-20261011-5fps/`; its `run.json` records the input and model hashes, environment, counts, and 453-second execution time. The working copy's manifest at `data/input/video-project-3-5fps-1280.json` links it to the original source checksum. Per the user's instruction, this footage and its visual derivatives are for local simulation and education only; they are not public-submission assets. See [ASSETS.md](ASSETS.md).
