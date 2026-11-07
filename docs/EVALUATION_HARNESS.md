@@ -29,6 +29,19 @@ For descriptive ID-churn windows, run:
 
 It writes `track_diagnostics.json`. These are not ID-switch scores: label continuous player passages before claiming identity accuracy.
 
+## Controlled tracking A/B run
+
+Run this from a normal local PowerShell terminal (not a time-limited automation window). It reuses the baseline session's exact video, model, and pitch polygon, changes **only** the lost-track buffer from its baseline default of 5 seconds to 8 seconds, disables AWS for the experiment, then writes `tracking_ab_comparison.json` in the candidate session:
+
+```powershell
+.\run_tracking_ab.ps1 `
+  -BaselineRunDir data\sessions\match-20261012-video-retest-polygon `
+  -CandidateRunDir data\sessions\match-ab-lost-buffer-8s `
+  -LostTrackBufferSeconds 8
+```
+
+Do not select a winner from the JSON alone. Reject runs that break structural checks, then review the same labeled player passages and the annotated video before accepting a changed setting.
+
 ## What it measures
 
 - perception counts: frames, observations, player IDs, ball candidates, off-pitch rejections, duplicate frame/track IDs, and short-track share;
