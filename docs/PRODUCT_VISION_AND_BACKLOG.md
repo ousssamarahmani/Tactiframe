@@ -60,14 +60,16 @@ This is the maintained checklist after the first local MVP foundation. The histo
 
 - [ ] Run the 5-second versus 8-second lost-track-buffer A/B session locally; inspect its annotated video and `tracking_ab_comparison.json` before accepting or rejecting the setting.
 
-### Next — Agentic Vision evidence artifacts
+### Completed — Agentic Vision evidence artifacts v1
 
-- [ ] Generate overall and per-team candidate heatmaps from session tracks.
-- [ ] Generate 3×3 zone occupancy matrices with counts, normalized values, coordinate-system metadata, and limitations.
-- [ ] Generate candidate team-shape snapshots from track positions.
-- [ ] Store every artifact under the session with source counts, parameters, and a reproducible schema.
-- [ ] Add deterministic synthetic-track tests with known heatmap and matrix outputs.
-- [ ] Add evaluation-harness checks for artifact availability and schema validity.
+- [x] Generate overall and per-team candidate heatmaps from session tracks.
+- [x] Generate 3×3 zone occupancy matrices with counts, normalized values, coordinate-system metadata, and limitations.
+- [x] Generate candidate team-shape snapshots from track positions.
+- [x] Store every artifact under the session with source counts, parameters, and a reproducible schema.
+- [x] Add deterministic synthetic-track tests with known heatmap and matrix outputs.
+- [x] Add evaluation-harness checks for artifact availability and schema validity.
+
+These are JSON evidence artifacts for tool use and API delivery. They are candidate/unverified and image-relative; a visual workspace renderer and calibrated pitch views are later work.
 
 ### Next — Agentic Vision chat and simulation
 

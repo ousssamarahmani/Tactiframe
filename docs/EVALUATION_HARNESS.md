@@ -29,6 +29,14 @@ For descriptive ID-churn windows, run:
 
 It writes `track_diagnostics.json`. These are not ID-switch scores: label continuous player passages before claiming identity accuracy.
 
+Generate candidate evidence artifacts before Agentic Vision Chat uses a session:
+
+```powershell
+.\.venv\Scripts\python generate_evidence_artifacts.py --run-dir data\sessions\your-session
+```
+
+It writes `artifacts/heatmap.json`, `artifacts/zone_matrix.json`, and `artifacts/team_shape_snapshots.json`, then registers them in `run.json`. These are deterministic, image-relative JSON artifacts—not calibrated tactical facts or rendered coach-facing charts.
+
 ## Controlled tracking A/B run
 
 Run this from a normal local PowerShell terminal (not a time-limited automation window). It reuses the baseline session's exact video, model, and pitch polygon, changes **only** the lost-track buffer from its baseline default of 5 seconds to 8 seconds, disables AWS for the experiment, then writes `tracking_ab_comparison.json` in the candidate session:

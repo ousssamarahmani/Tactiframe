@@ -6,6 +6,8 @@ The current evaluation harness writes `evaluation.json` for a completed session.
 
 The same session's 30-second `track_diagnostics.json` shows 44 distinct IDs in 0–30s, then 40, 47, 35, and 37 across the following windows. New IDs appear 12 times in 30–60s, 15 times in 60–90s, once in 90–120s, and 15 times in 120–150s. This identifies candidate review windows for a controlled ByteTrack tuning run; it is not an ID-switch score because no player identity labels exist.
 
+The session also has deterministic candidate evidence artifacts: an overall/per-team 20×12 image-relative occupancy heatmap, a 3×3 zone-occupancy matrix, and five-second normalized-image team-shape snapshots. The evaluation harness verified all three artifact schemas and files. They expose track distributions for agent tools; they do not establish formations, pressure, possession, or calibrated field positions.
+
 ## Verified in this checkout
 
 The observation worker completed a full-duration technical run on a supplied 4-minute-15-second match segment. It processed a 5 fps working copy of all 7,661 source frames (1,277 sampled frames), wrote five nonempty run files, and produced a playable annotated video with 1,277 frames. The run folder is `data/sessions/match-20261011-5fps/`; its `run.json` records the input and model hashes, environment, counts, and 453-second execution time. The working copy's manifest at `data/input/video-project-3-5fps-1280.json` links it to the original source checksum. Per the user's instruction, this footage and its visual derivatives are for local simulation and education only; they are not public-submission assets. See [ASSETS.md](ASSETS.md).

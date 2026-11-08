@@ -66,6 +66,25 @@ def _track_continuity_metrics(run_dir: Path, run: dict) -> dict:
     }
 
 
+def _artifact_check(run_dir: Path, run: dict) -> tuple[dict, dict]:
+    manifest = run.get("outputs", {}).get("evidenceArtifacts")
+    if not manifest:
+        return ({"available": False, "reason": "not_generated"},
+                _check("evidence_artifacts_valid_when_present", True, {"status": "not_generated"}))
+    required = {"heatmap", "zoneMatrix", "teamShape"}
+    valid = isinstance(manifest, dict) and required.issubset(manifest)
+    available = {}
+    for key in required:
+        relative_path = manifest.get(key) if isinstance(manifest, dict) else None
+        path = (run_dir / relative_path).resolve() if relative_path else None
+        payload = _read_json(path, {}) if path and path.is_relative_to(run_dir) else {}
+        available[key] = bool(path and path.is_file() and payload.get("schemaVersion") == 1
+                              and payload.get("product") == "TactiFrame")
+    return ({"available": valid and all(available.values()), "files": available},
+            _check("evidence_artifacts_valid_when_present", valid and all(available.values()),
+                   {"required": sorted(required), "files": available}))
+
+
 def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
     """Measure a completed session without claiming tactical accuracy.
 
@@ -81,6 +100,7 @@ def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
         run_dir / run.get("outputs", {}).get("validatedBallCandidates", "ball_candidates_validated.json"),
         {},
     )
+    artifact_metrics, artifact_check = _artifact_check(run_dir, run)
 
     event_types = Counter(event.get("type", "unknown") for event in events)
     zones = Counter(event.get("zone", {}).get("id", "unknown") for event in events)
@@ -101,6 +121,7 @@ def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
         _check("candidate_events_have_local_evidence", all(item["available"] for item in evidence),
                {"events": len(events), "available": sum(item["available"] for item in evidence)}),
         _trace_tool_order_check(steps),
+        artifact_check,
     ]
     if plan is None:
         checks.append(_check("plan_is_evidence_backed", True,
@@ -139,6 +160,7 @@ def evaluate_session(run_dir: Path, *, write: bool = True) -> dict:
             "validatedBallCandidates": run.get("counts", {}).get("validatedBallCandidates"),
             "ballValidation": run.get("ballValidation", {"available": bool(ball_validation)}),
             "trackContinuity": _track_continuity_metrics(run_dir, run),
+            "evidenceArtifacts": artifact_metrics,
             "offPitchRejected": run.get("filterRejections", {}).get("off_pitch_rejected"),
             "candidateEvents": len(events),
             "eventsByType": dict(event_types),
