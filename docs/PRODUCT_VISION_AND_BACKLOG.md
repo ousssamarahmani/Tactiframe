@@ -42,6 +42,50 @@ Product-level agents
 
 An agent must cite session IDs, event IDs, artifact IDs, and evidence clips for every video-derived tactical claim. When evidence is missing or unverified, it must say so and stop rather than fabricate an answer.
 
+## Current task list — source of truth
+
+This is the maintained checklist after the first local MVP foundation. The historical hackathon checklist is not the current implementation status.
+
+### Completed foundation
+
+- [x] Pitch-aware OpenCV 5 observation worker with football YOLO, ByteTrack, team candidates, ball candidates, run metadata, and annotated video.
+- [x] Candidate events, image-relative zones, evidence clips, and explicit event-confidence/limitation fields.
+- [x] Six-agent-tool contract, vision-dependent tool ordering, `trace.json`, and named coach approval gate.
+- [x] Private S3 artifact sync and Bedrock evidence-bound coach-review proposal path, with local fallback.
+- [x] FastAPI session, event, trace, plan, and approval endpoints plus scripted demo flow.
+- [x] Session evaluation harness, ball-candidate validation, track diagnostics, and deterministic simulation tests.
+- [x] Controlled A/B runner and comparator for one-setting tracking experiments.
+
+### In progress — current CV gate
+
+- [ ] Run the 5-second versus 8-second lost-track-buffer A/B session locally; inspect its annotated video and `tracking_ab_comparison.json` before accepting or rejecting the setting.
+
+### Next — Agentic Vision evidence artifacts
+
+- [ ] Generate overall and per-team candidate heatmaps from session tracks.
+- [ ] Generate 3×3 zone occupancy matrices with counts, normalized values, coordinate-system metadata, and limitations.
+- [ ] Generate candidate team-shape snapshots from track positions.
+- [ ] Store every artifact under the session with source counts, parameters, and a reproducible schema.
+- [ ] Add deterministic synthetic-track tests with known heatmap and matrix outputs.
+- [ ] Add evaluation-harness checks for artifact availability and schema validity.
+
+### Next — Agentic Vision chat and simulation
+
+- [ ] Add evidence-artifact API endpoints by session ID.
+- [ ] Add evidence-bound Agent Vision Chat: a question triggers tools and returns event IDs, artifact IDs, clips, limitations, and trace steps.
+- [ ] Simulate Video Analyst, Vision Agent, and Tactical Analyst roles in one local process before any distributed deployment.
+- [ ] Test no-evidence, missing-clip, density-first, contest-first, heatmap, and matrix question scenarios.
+- [ ] Enforce that chat cannot draft a plan or imply approval without the existing evidence and human gate.
+
+### Later — production and advanced intelligence
+
+- [ ] Async EC2 GPU worker, S3-backed jobs, authenticated FastAPI, monitoring, retention, and cost controls.
+- [ ] Bedrock AgentCore deployment for the lead agent after specialist-agent contracts are stable.
+- [ ] MCP wrapper for the stable evidence tools; A2A only after agents are independent services.
+- [ ] Labeled evaluation for calibrated pitch coordinates, team identity, ball/possession/pass candidates, pressure, compactness, and shape analytics.
+- [ ] Multi-camera synchronization and cross-camera association with labeled evaluation.
+- [ ] Evidence graph/RAG, NVIDIA VSS/Cosmos evaluation, and private club pilots with written footage/data agreements.
+
 ## Implementation plan
 
 ### Milestone 1 — measured single-camera Agentic Vision

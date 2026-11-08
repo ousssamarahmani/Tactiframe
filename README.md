@@ -101,7 +101,7 @@ The proof is visible in `trace.json`: `run_perception` → `list_events` → a r
 
 ## Roadmap
 
-TactiFrame is evolving into an **Agentic Vision engine for football intelligence**. The full product position, deployment boundaries, testing strategy, and implementation backlog are in [Product Vision and Backlog](docs/PRODUCT_VISION_AND_BACKLOG.md).
+TactiFrame is evolving into an **Agentic Vision engine for football intelligence**. The [current task list](docs/PRODUCT_VISION_AND_BACKLOG.md#current-task-list--source-of-truth) and full product position, deployment boundaries, testing strategy, and implementation backlog are in [Product Vision and Backlog](docs/PRODUCT_VISION_AND_BACKLOG.md).
 
 The immediate ordered backlog is:
 
