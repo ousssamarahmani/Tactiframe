@@ -20,7 +20,20 @@ Use either a session folder name or the `runId` from `run.json` as
 | `GET` | `/sessions/{session_id}/events` | Candidate events |
 | `GET` | `/sessions/{session_id}/trace` | Agent and cloud trace |
 | `GET` | `/sessions/{session_id}/plan` | Current draft/decision |
+| `GET` | `/sessions/{session_id}/artifacts` | Candidate heatmap, zone matrix, and team-shape JSON |
+| `GET` | `/sessions/{session_id}/video` | Annotated session video |
+| `GET` | `/review/{session_id}` | Local visual evidence viewer |
 | `POST` | `/sessions/{session_id}/approval` | Explicit coach decision |
+
+## Evidence viewer
+
+After running `generate_evidence_artifacts.py` for a session, open this local browser URL:
+
+```text
+http://127.0.0.1:8000/review/match-20261012-video-retest-polygon
+```
+
+It plays the annotated session video and renders candidate heatmap, zone-matrix, and team-shape artifacts. It is an evidence viewer, not a source of verified tactical facts.
 
 Approve or reject only after reviewing the evidence:
 

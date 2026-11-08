@@ -29,6 +29,19 @@ class ApiTests(unittest.TestCase):
         (self.run_dir / "plan.json").write_text(json.dumps({
             "id": "plan-123", "status": "pending_approval",
         }))
+        (self.run_dir / "tracked.mp4").write_bytes(b"video")
+        artifact_dir = self.run_dir / "artifacts"
+        artifact_dir.mkdir()
+        for name in ("heatmap", "zone_matrix", "team_shape"):
+            (artifact_dir / f"{name}.json").write_text(json.dumps({
+                "schemaVersion": 1, "product": "TactiFrame", "kind": name,
+            }))
+        run = json.loads((self.run_dir / "run.json").read_text())
+        run["outputs"] = {"annotatedVideo": "tracked.mp4", "evidenceArtifacts": {
+            "heatmap": "artifacts/heatmap.json", "zoneMatrix": "artifacts/zone_matrix.json",
+            "teamShape": "artifacts/team_shape.json",
+        }}
+        (self.run_dir / "run.json").write_text(json.dumps(run))
         self.app = create_app(self.root)
 
     def tearDown(self):
@@ -44,6 +57,10 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.endpoint("/sessions/{session_id}/events")("demo-session")["events"][0]["id"], "evt-0001")
         self.assertEqual(self.endpoint("/sessions/{session_id}/trace")("demo-session")["runId"], "run-123")
         self.assertEqual(self.endpoint("/sessions/{session_id}/plan")("demo-session")["status"], "pending_approval")
+        artifacts = self.endpoint("/sessions/{session_id}/artifacts")("demo-session")
+        self.assertEqual(artifacts["artifacts"]["heatmap"]["product"], "TactiFrame")
+        self.assertEqual(self.endpoint("/sessions/{session_id}/video")("demo-session").media_type, "video/mp4")
+        self.assertEqual(self.endpoint("/review/{session_id}")("demo-session").media_type, "text/html")
 
     def test_approval_requires_validated_explicit_decision(self):
         with self.assertRaises(ValidationError):

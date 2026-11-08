@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from agent.tools import ToolLayer
@@ -43,6 +44,14 @@ def _safe_identifier(value: str) -> str:
     if not value or value in {".", ".."} or Path(value).name != value:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     return value
+
+
+def _safe_session_file(run_dir: Path, relative_path: str, artifact: str) -> Path:
+    path = (run_dir / relative_path).resolve()
+    if not path.is_relative_to(run_dir.resolve()) or not path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Session artifact not found: {artifact}")
+    return path
 
 
 def _resolve_session(session_root: Path, session_id: str) -> Path:
@@ -109,6 +118,42 @@ def create_app(session_root: Path | str | None = None) -> FastAPI:
     def get_plan(session_id: str) -> dict:
         run_dir = _resolve_session(root, session_id)
         return _read_json(run_dir / "plan.json", "plan.json")
+
+    @app.get("/sessions/{session_id}/artifacts")
+    def get_artifacts(session_id: str) -> dict:
+        run_dir = _resolve_session(root, session_id)
+        run = _read_json(run_dir / "run.json", "run.json")
+        manifest = run.get("outputs", {}).get("evidenceArtifacts")
+        if not isinstance(manifest, dict):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Session evidence artifacts have not been generated")
+        artifacts = {}
+        for name in ("heatmap", "zoneMatrix", "teamShape"):
+            relative_path = manifest.get(name)
+            if not isinstance(relative_path, str):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail=f"Session artifact not found: {name}")
+            artifacts[name] = _read_json(_safe_session_file(run_dir, relative_path, name), name)
+        return {"sessionId": run_dir.name, "artifacts": artifacts}
+
+    @app.get("/sessions/{session_id}/video")
+    def get_video(session_id: str):
+        run_dir = _resolve_session(root, session_id)
+        run = _read_json(run_dir / "run.json", "run.json")
+        relative_path = run.get("outputs", {}).get("annotatedVideo", "tracked.mp4")
+        if not isinstance(relative_path, str):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail="Session annotated video is not available")
+        return FileResponse(_safe_session_file(run_dir, relative_path, "annotated video"), media_type="video/mp4")
+
+    @app.get("/review/{session_id}")
+    def review_page(session_id: str):
+        _resolve_session(root, session_id)
+        page = Path(__file__).with_name("static") / "evidence_viewer.html"
+        if not page.is_file():
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="Evidence viewer is not installed")
+        return FileResponse(page, media_type="text/html")
 
     @app.post("/sessions/{session_id}/approval")
     def record_approval(session_id: str, request: ApprovalRequest) -> dict:

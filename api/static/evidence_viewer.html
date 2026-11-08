@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TactiFrame Evidence Viewer</title>
+  <style>
+    :root { color-scheme: dark; --ink:#e7edf8; --muted:#95a6bf; --panel:#111b2d; --line:#263858; --blue:#43a5ff; --red:#fa6474; --green:#45d7a6; }
+    * { box-sizing:border-box; } body { margin:0; background:#07101f; color:var(--ink); font:14px/1.45 Inter,Segoe UI,Arial,sans-serif; }
+    header { padding:18px 24px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; background:#09162a; }
+    h1 { font-size:20px; margin:0; } header span { color:var(--green); font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
+    main { max-width:1540px; padding:20px; margin:auto; display:grid; grid-template-columns:minmax(0,1.8fr) minmax(340px,1fr); gap:18px; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; } h2 { font-size:14px; margin:0 0 12px; color:#fff; } video { width:100%; background:#000; border-radius:6px; max-height:72vh; }
+    .meta { color:var(--muted); margin:8px 0 0; } .right { display:grid; gap:18px; align-content:start; }
+    .tabs { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; } button, select { color:var(--ink); background:#1a2a45; border:1px solid #37517c; padding:7px 9px; border-radius:6px; cursor:pointer; }
+    button.active { background:#1768b4; border-color:#43a5ff; } .grid { display:grid; gap:2px; background:#182944; border:1px solid #28446b; padding:2px; aspect-ratio:1.66; }
+    .cell { min-height:17px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; text-shadow:0 1px 2px #000; }
+    .legend { color:var(--muted); font-size:12px; margin-top:8px; } .matrix { grid-template-columns:repeat(3, 1fr); aspect-ratio:1.4; }
+    .pitch { position:relative; min-height:250px; border:2px solid #6b9877; background:linear-gradient(90deg,#174a32 0 50%,#1b593b 50%); overflow:hidden; }
+    .pitch:before { content:""; position:absolute; left:50%; top:0; bottom:0; border-left:1px solid #d4efd8; } .shape { position:absolute; border:2px solid var(--blue); background:#43a5ff22; } .shape.team_b { border-color:var(--red); background:#fa647422; }
+    .shape label { position:absolute; top:-20px; left:0; white-space:nowrap; font-size:11px; } .notice { color:#ffd989; margin:0; } .error { color:#ff9da8; white-space:pre-wrap; }
+    @media (max-width:900px) { main { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header><h1>TactiFrame — Candidate Evidence Viewer</h1><span id="status">Loading session</span></header>
+  <main>
+    <section class="panel"><h2>Annotated video</h2><video id="video" controls playsinline></video><p class="meta" id="session"></p><p class="notice">All visualizations are candidate, image-relative evidence. They do not establish possession, pressure, formation, or tactical truth.</p></section>
+    <aside class="right">
+      <section class="panel"><h2>Occupancy heatmap</h2><div class="tabs" id="heatmap-tabs"></div><div id="heatmap" class="grid"></div><p class="legend" id="heatmap-legend"></p></section>
+      <section class="panel"><h2>3×3 zone occupancy matrix</h2><div class="tabs" id="matrix-tabs"></div><div id="matrix" class="grid matrix"></div><p class="legend" id="matrix-legend"></p></section>
+      <section class="panel"><h2>Candidate team-shape snapshots</h2><select id="snapshot-select"></select><div class="pitch" id="pitch"></div><p class="legend">Rectangles are observed image-space extents; they are not confirmed formations.</p></section>
+    </aside>
+  </main>
+  <script>
+    const sessionId = decodeURIComponent(location.pathname.split('/').pop());
+    const colors = {all:[67,165,255], team_a:[69,215,166], team_b:[250,100,116], unknown:[190,150,255]};
+    let artifacts;
+    function renderGrid(target, data, selected, tabTarget, legendTarget) {
+      const groups = data.groups, names = Object.keys(groups); let active = selected || names[0];
+      const tabs = document.querySelector(tabTarget); tabs.innerHTML = '';
+      names.forEach(name => { const button=document.createElement('button'); button.textContent=name.replace('_',' '); button.className=name===active?'active':''; button.onclick=()=>renderGrid(target,data,name,tabTarget,legendTarget); tabs.append(button); });
+      const payload=groups[active], rows=payload.counts.length, cols=payload.counts[0].length, max=Math.max(...payload.counts.flat(),1), node=document.querySelector(target);
+      node.style.gridTemplateColumns=`repeat(${cols},1fr)`; node.innerHTML='';
+      payload.counts.forEach(row=>row.forEach(value=>{ const cell=document.createElement('div'); cell.className='cell'; const rgb=colors[active]||colors.all; cell.style.background=`rgba(${rgb.join(',')},${0.12+0.88*value/max})`; cell.textContent=value||''; node.append(cell); }));
+      document.querySelector(legendTarget).textContent=`${active.replace('_',' ')}: ${payload.observations} candidate track observations · ${data.coordinateSystem}`;
+    }
+    function renderShape() {
+      const snapshot=artifacts.teamShape.snapshots[Number(document.querySelector('#snapshot-select').value)]; const pitch=document.querySelector('#pitch'); pitch.innerHTML='';
+      Object.entries(snapshot.groups).forEach(([team, data])=>{ const box=document.createElement('div'); const e=data.extent; box.className=`shape ${team}`; box.style.left=`${e.minX*100}%`; box.style.top=`${e.minY*100}%`; box.style.width=`${Math.max(1,(e.maxX-e.minX)*100)}%`; box.style.height=`${Math.max(1,(e.maxY-e.minY)*100)}%`; box.innerHTML=`<label>${team.replace('_',' ')} · ${data.observations}</label>`; pitch.append(box); });
+    }
+    async function boot() {
+      try { const response=await fetch(`/sessions/${encodeURIComponent(sessionId)}/artifacts`); if(!response.ok) throw new Error(await response.text()); const body=await response.json(); artifacts=body.artifacts;
+        document.querySelector('#video').src=`/sessions/${encodeURIComponent(sessionId)}/video`; document.querySelector('#session').textContent=`Session: ${body.sessionId} · ${artifacts.heatmap.source.trackObservations} candidate observations`;
+        renderGrid('#heatmap',artifacts.heatmap,null,'#heatmap-tabs','#heatmap-legend'); renderGrid('#matrix',artifacts.zoneMatrix,null,'#matrix-tabs','#matrix-legend');
+        const select=document.querySelector('#snapshot-select'); artifacts.teamShape.snapshots.forEach((snapshot,index)=>{ const option=document.createElement('option'); option.value=index; option.textContent=`${snapshot.seconds}s · frame ${snapshot.frame}`; select.append(option); }); select.onchange=renderShape; renderShape(); document.querySelector('#status').textContent='Evidence loaded';
+      } catch(error) { document.querySelector('main').innerHTML=`<section class="panel error">Unable to load this session’s evidence viewer.\n${error}</section>`; document.querySelector('#status').textContent='Load failed'; }
+    } boot();
+  </script>
+</body>
+</html>
