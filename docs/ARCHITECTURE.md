@@ -1,6 +1,6 @@
 # TactiFrame architecture
 
-This page separates the **running local path** from the hackathon integrations still to build. The [README](../README.md) has the current status table; [EVAL.md](EVAL.md) records measured runs and limitations.
+This page separates the **running local path** from the planned Agentic Vision engine. The [Product Vision and Backlog](PRODUCT_VISION_AND_BACKLOG.md) defines the future agent roles, production boundaries, simulation plan, and club-pilot path. [EVAL.md](EVAL.md) records measured runs and limitations.
 
 ## Running local path
 

@@ -1,5 +1,7 @@
 # TactiFrame Workspace
 
+> **Status:** planned product layer. TactiFrame itself is the reusable Agentic Vision engine; this Workspace is one future coach-facing solution built on that engine. See [Product Vision and Backlog](PRODUCT_VISION_AND_BACKLOG.md).
+
 > **OpenCV sees the match; the agent reasons over events and clips; the coach asks, reviews, and approves in one place.**
 
 ## Purpose
@@ -65,12 +67,11 @@ The Workspace must preserve these rules:
 ## Roadmap placement
 
 ```text
-P0  OpenCV 5 pitch-aware perception, candidate events, zones, and clips
-P0  Agent tools, trace, coach approval, AWS S3/Bedrock path, and FastAPI demo
-P1  Optional MCP wrapper and light demo presentation polish
-    Hackathon submission
-P2  Agent Vision Chat and React Workspace
-P3  Reports, multi-match memory, VSS/Cosmos, and further CV quality work
+Now  Measured CV baseline, candidate events, clips, tools, trace, approval, API, and evaluation harness
+Next Evidence artifacts (heatmaps, matrices, team shape) and evidence API
+Next Agent Vision Chat and the Video Analyst / Vision Agent / Tactical Analyst role simulations
+Later Deployable AWS MVP, workspace, product-level football agents, and multi-camera evaluation
+Later A2A, evidence-graph retrieval, NVIDIA VSS/Cosmos, and cross-session intelligence
 ```
 
 React or Next.js is deliberately deferred until the P0 scripted demo works with real OpenCV outputs, evidence clips, a vision-influenced trace, explicit approval, and meaningful AWS use. At that point, the Workspace turns the proven workflow into a usable coach experience without weakening the evidence contract.

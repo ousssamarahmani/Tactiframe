@@ -101,15 +101,18 @@ The proof is visible in `trace.json`: `run_perception` → `list_events` → a r
 
 ## Roadmap
 
-The perception → events → tools → trace → approval path, S3/Bedrock integration, review API, and scripted demo are complete. The current implementation task list is:
+TactiFrame is evolving into an **Agentic Vision engine for football intelligence**. The full product position, deployment boundaries, testing strategy, and implementation backlog are in [Product Vision and Backlog](docs/PRODUCT_VISION_AND_BACKLOG.md).
 
-1. **Next — Evaluation harness:** Write `evaluation.json` for each completed session, measure perception/event/evidence/agent outcomes, and run synthetic scenario checks: density-first, contest-first, no-events, and missing evidence. The harness must verify that vision changes tool order and that unsupported plans are never drafted.
-2. **MVP — Targeted CV iteration:** Use the harness metrics to improve pitch handling, track continuity, and ball candidates only where the measurements justify it.
-3. **MVP — Evidence-review workspace:** Add a minimal coach-facing surface on top of the existing API once the harness establishes a stable baseline.
-4. **Later — Evidence-bound Q&A and plan-versus-reality:** Support coach questions and compare a structured pre-match plan with observed events, while preserving event and clip references.
-5. **Later — MCP, NVIDIA, and multi-session capabilities:** Add these only after the single-session workflow is reliable and measured.
+The immediate ordered backlog is:
 
-For the coach-facing end state after the hackathon, see [TactiFrame Workspace](docs/PRODUCT_WORKSPACE.md): an evidence-bound Agent Vision Chat and light session/events/plan workspace that reuses this pipeline rather than bypassing it.
+1. Complete the controlled tracking A/B run and accept or reject the single changed setting from evidence.
+2. Generate tested heatmap, zone-matrix, and team-shape evidence artifacts from session tracks.
+3. Extend the session API for those artifacts.
+4. Build evidence-bound Agent Vision Chat using the existing tool and trace contract.
+5. Split the core roles into Video Analyst, Vision Agent, and Tactical Analyst simulations before deploying them independently.
+6. Deploy the CV worker and lead agent in the measured AWS order described in the product backlog.
+
+The future coach-facing layer is described in [TactiFrame Workspace](docs/PRODUCT_WORKSPACE.md). It must reuse the evidence contract rather than bypass it.
 
 ## Repository map
 
@@ -126,6 +129,7 @@ For the coach-facing end state after the hackathon, see [TactiFrame Workspace](d
 | `docs/CV_BASELINE.md` | Frozen pitch-aware CV reference and acceptance checks |
 | `docs/AWS_SETUP.md` | Private S3 and Bedrock setup, runtime behavior, and validation |
 | `docs/ASSETS.md` | Footage and model provenance |
+| `docs/PRODUCT_VISION_AND_BACKLOG.md` | Product vision, agent boundaries, production roadmap, simulation plan, and pilot path |
 
 ## Limits, assets, and license
 
