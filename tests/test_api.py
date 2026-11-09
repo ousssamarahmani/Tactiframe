@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from api.main import ApprovalRequest, create_app
+from api.main import ApprovalRequest, ChatRequest, create_app
 
 
 class ApiTests(unittest.TestCase):
@@ -19,9 +19,13 @@ class ApiTests(unittest.TestCase):
         self.run_dir.mkdir()
         (self.run_dir / "run.json").write_text(json.dumps({
             "runId": "run-123", "status": "observations-only",
+            "counts": {"trackObservations": 4},
+            "environment": {"opencv": "5.0.0"},
+            "quality": {"pitchCalibration": "manual-image-polygon"},
         }))
         (self.run_dir / "events.json").write_text(json.dumps([
-            {"id": "evt-0001", "status": "candidate"},
+            {"id": "evt-0001", "status": "candidate", "type": "zone_density",
+             "zone": {"id": "r1c1"}, "evidence": {"clipPath": "clips/evt-0001.mp4"}},
         ]))
         (self.run_dir / "trace.json").write_text(json.dumps({
             "runId": "run-123", "steps": [{"name": "draft_plan"}],
@@ -30,12 +34,18 @@ class ApiTests(unittest.TestCase):
             "id": "plan-123", "status": "pending_approval",
         }))
         (self.run_dir / "tracked.mp4").write_bytes(b"video")
+        (self.run_dir / "clips").mkdir()
+        (self.run_dir / "clips" / "evt-0001.mp4").write_bytes(b"clip")
         artifact_dir = self.run_dir / "artifacts"
         artifact_dir.mkdir()
         for name in ("heatmap", "zone_matrix", "team_shape"):
             (artifact_dir / f"{name}.json").write_text(json.dumps({
                 "schemaVersion": 1, "product": "TactiFrame", "kind": name,
             }))
+        (artifact_dir / "zone_matrix.json").write_text(json.dumps({
+            "schemaVersion": 1, "product": "TactiFrame", "kind": "candidate_zone_occupancy_matrix",
+            "groups": {"all": {"counts": [[0, 0, 0], [0, 4, 0], [0, 0, 0]]}},
+        }))
         run = json.loads((self.run_dir / "run.json").read_text())
         run["outputs"] = {"annotatedVideo": "tracked.mp4", "evidenceArtifacts": {
             "heatmap": "artifacts/heatmap.json", "zoneMatrix": "artifacts/zone_matrix.json",
@@ -60,7 +70,21 @@ class ApiTests(unittest.TestCase):
         artifacts = self.endpoint("/sessions/{session_id}/artifacts")("demo-session")
         self.assertEqual(artifacts["artifacts"]["heatmap"]["product"], "TactiFrame")
         self.assertEqual(self.endpoint("/sessions/{session_id}/video")("demo-session").media_type, "video/mp4")
+        self.assertEqual(self.endpoint("/sessions/{session_id}/clips/{event_id}")(
+            "demo-session", "evt-0001").media_type, "video/mp4")
         self.assertEqual(self.endpoint("/review/{session_id}")("demo-session").media_type, "text/html")
+
+    def test_chat_is_evidence_bound_and_never_drafts_a_plan(self):
+        result = self.endpoint("/sessions/{session_id}/chat")(
+            "demo-session", ChatRequest(question="Show candidate evidence in r1c1"),
+        )
+        self.assertEqual(result["status"], "evidence_backed_candidate")
+        self.assertEqual(result["evidence"]["events"], ["evt-0001"])
+        self.assertEqual(result["evidence"]["clips"][0]["url"], "/sessions/demo-session/clips/evt-0001")
+        self.assertIn("candidate", result["answer"].lower())
+        self.assertEqual(json.loads((self.run_dir / "plan.json").read_text())["status"], "pending_approval")
+        trace = json.loads((self.run_dir / "trace.json").read_text())["steps"]
+        self.assertIn("analyze_zone", [step["name"] for step in trace])
 
     def test_approval_requires_validated_explicit_decision(self):
         with self.assertRaises(ValidationError):

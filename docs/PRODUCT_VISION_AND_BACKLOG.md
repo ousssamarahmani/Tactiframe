@@ -71,10 +71,11 @@ This is the maintained checklist after the first local MVP foundation. The histo
 
 These are JSON evidence artifacts for tool use and API delivery. They are candidate/unverified and image-relative; a visual workspace renderer and calibrated pitch views are later work.
 
-### Next — Agentic Vision chat and simulation
+### In progress — Agentic Vision chat and simulation
 
-- [ ] Add evidence-artifact API endpoints by session ID.
-- [ ] Add evidence-bound Agent Vision Chat: a question triggers tools and returns event IDs, artifact IDs, clips, limitations, and trace steps.
+- [x] Add evidence-artifact, annotated-video, and selected-clip API endpoints by session ID.
+- [x] Add API-only evidence-bound Agent Vision Chat: a question triggers tools and returns event IDs, artifact references, browser-safe clip URLs, limitations, and trace steps.
+- [ ] Add the chat panel to the local Evidence Viewer after the API contract is tested on more sessions.
 - [ ] Simulate Video Analyst, Vision Agent, and Tactical Analyst roles in one local process before any distributed deployment.
 - [ ] Test no-evidence, missing-clip, density-first, contest-first, heatmap, and matrix question scenarios.
 - [ ] Enforce that chat cannot draft a plan or imply approval without the existing evidence and human gate.
