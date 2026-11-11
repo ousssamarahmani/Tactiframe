@@ -25,6 +25,7 @@ Use either a session folder name or the `runId` from `run.json` as
 | `GET` | `/sessions/{session_id}/clips/{event_id}` | One evidence clip selected from `events.json` |
 | `GET` | `/review/{session_id}` | Local visual evidence viewer |
 | `POST` | `/sessions/{session_id}/chat` | Evidence-bound candidate answer; cannot draft or approve a plan |
+| `POST` | `/sessions/{session_id}/simulate-agents` | Local Video Analyst, Vision Agent, and Tactical Analyst simulation; cannot draft or approve a plan |
 | `POST` | `/sessions/{session_id}/approval` | Explicit coach decision |
 
 ## Evidence viewer

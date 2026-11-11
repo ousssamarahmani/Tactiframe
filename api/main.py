@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from agent.chat import answer_question
+from agent.specialists import run_specialist_simulation
 from agent.tools import ToolLayer
 from config import SESSION_DIR
 
@@ -189,6 +190,14 @@ def create_app(session_root: Path | str | None = None) -> FastAPI:
             if isinstance(clip, dict) and clip.get("eventId"):
                 clip["url"] = f"/sessions/{run_dir.name}/clips/{clip['eventId']}"
         return {"sessionId": run_dir.name, "question": request.question.strip(), **result}
+
+    @app.post("/sessions/{session_id}/simulate-agents")
+    def simulate_agents(session_id: str) -> dict:
+        """Run local specialist roles; this never drafts or approves a plan."""
+        run_dir = _resolve_session(root, session_id)
+        tools, prior_trace = _chat_tools(run_dir)
+        result = run_specialist_simulation(tools, run_dir=run_dir, prior_trace=prior_trace)
+        return {"sessionId": run_dir.name, **result}
 
     @app.post("/sessions/{session_id}/approval")
     def record_approval(session_id: str, request: ApprovalRequest) -> dict:

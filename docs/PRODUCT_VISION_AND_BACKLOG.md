@@ -76,7 +76,8 @@ These are JSON evidence artifacts for tool use and API delivery. They are candid
 - [x] Add evidence-artifact, annotated-video, and selected-clip API endpoints by session ID.
 - [x] Add API-only evidence-bound Agent Vision Chat: a question triggers tools and returns event IDs, artifact references, browser-safe clip URLs, limitations, and trace steps.
 - [ ] Add the chat panel to the local Evidence Viewer after the API contract is tested on more sessions.
-- [ ] Simulate Video Analyst, Vision Agent, and Tactical Analyst roles in one local process before any distributed deployment.
+- [x] Simulate Video Analyst, Vision Agent, and Tactical Analyst roles in one local process before any distributed deployment.
+- [ ] Run the chat and specialist simulations against additional fixed/synthetic sessions before enabling model-driven specialist prompts.
 - [ ] Test no-evidence, missing-clip, density-first, contest-first, heatmap, and matrix question scenarios.
 - [ ] Enforce that chat cannot draft a plan or imply approval without the existing evidence and human gate.
 

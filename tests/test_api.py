@@ -86,6 +86,12 @@ class ApiTests(unittest.TestCase):
         trace = json.loads((self.run_dir / "trace.json").read_text())["steps"]
         self.assertIn("analyze_zone", [step["name"] for step in trace])
 
+    def test_specialist_simulation_exposes_roles_without_drafting_plan(self):
+        result = self.endpoint("/sessions/{session_id}/simulate-agents")("demo-session")
+        self.assertEqual(result["status"], "specialist_evidence_reviewed")
+        self.assertEqual(result["specialists"]["tactical"]["recommendation"], "analyze_zone")
+        self.assertEqual(json.loads((self.run_dir / "plan.json").read_text())["status"], "pending_approval")
+
     def test_approval_requires_validated_explicit_decision(self):
         with self.assertRaises(ValidationError):
             ApprovalRequest(decision="approved")

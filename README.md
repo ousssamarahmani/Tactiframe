@@ -85,7 +85,7 @@ After a coach reviews the plan and source clip, record their actual decision:
 .\.venv\Scripts\python approve_plan.py --run-dir data\sessions\demo-run --decision approved --coach "Coach Name"
 ```
 
-Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (44 focused tests passed in the last checked environment).
+Use `--decision rejected` when appropriate. The demo does not approve itself. Run tests with `.\.venv\Scripts\python -m unittest discover tests -q` (49 focused tests passed in the last checked environment).
 
 ### Review through HTTP
 
@@ -130,6 +130,7 @@ The future coach-facing layer is described in [TactiFrame Workspace](docs/PRODUC
 | `docs/AWS_SETUP.md` | Private S3 and Bedrock setup, runtime behavior, and validation |
 | `docs/ASSETS.md` | Footage and model provenance |
 | `docs/PRODUCT_VISION_AND_BACKLOG.md` | Product vision, agent boundaries, production roadmap, simulation plan, and pilot path |
+| `docs/SPECIALIST_SIMULATION.md` | Local Video Analyst, Vision Agent, Tactical Analyst, and lead-synthesis behavior |
 
 ## Limits, assets, and license
 
