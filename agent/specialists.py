@@ -104,6 +104,16 @@ def run_specialist_simulation(tools: ToolLayer, *, run_dir: Path,
     else:
         next_tool, reason = tactical["recommendation"], "Tactical Analyst selected the order from candidate event mix"
     selected = next((event for event in events if event.get("zone", {}).get("id") == tactical["selectedZone"]), events[0])
+    clip_path = selected.get("evidence", {}).get("clipPath")
+    candidate_clip = (tools._require_run() / str(clip_path)).resolve()
+    if not isinstance(clip_path, str) or not candidate_clip.is_relative_to(tools._require_run().resolve()) or not candidate_clip.is_file() or candidate_clip.stat().st_size == 0:
+        tools.note_decision("Selected candidate lacks an evidence clip", "stop",
+                            "Specialists cannot continue without the linked candidate clip")
+        return {
+            "status": "evidence_incomplete", "run": summary,
+            "specialists": {"video": video, "vision": vision, "tactical": tactical},
+            "selectedEvent": selected["id"],
+        }
     tools.note_decision("Specialist evidence synthesis", next_tool, reason)
     if next_tool == "get_clip":
         first = tools.get_clip(selected["id"])

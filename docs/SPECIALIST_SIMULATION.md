@@ -26,8 +26,11 @@ The endpoint cannot draft or approve a plan. It reads session artifacts, appends
 | More `zone_contest` than `zone_density` candidates | `get_clip` |
 | Pitch calibration unavailable | `get_clip` overrides tactical route |
 | No candidate events | `stop`; no plan exists |
+| Candidate event has no readable linked clip | `stop`; evidence is incomplete |
 
 The local polygon session is a density-leading case: 18 density and 17 contest candidates. Its specialists selected `analyze_zone` for `r1c1`. These remain candidate observations, not validated tactics.
+
+The deterministic test suite also exercises evidence-bound chat across the density-first, contest-first, missing-clip, and no-event sessions. Chat can return only session references; it never drafts a plan or treats a candidate as a verified tactical conclusion.
 
 ## Boundary before A2A
 

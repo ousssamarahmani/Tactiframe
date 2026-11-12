@@ -67,7 +67,19 @@ def answer_question(tools: ToolLayer, question: str, *, prior_trace: list[dict] 
                         f"Selected {zone_id} from the question or first candidate event")
     zone = tools.analyze_zone(zone_id)
     selected = next((event for event in events if event["zone"]["id"] == zone_id), events[0])
-    clip = tools.get_clip(selected["id"])
+    try:
+        tools.get_clip(selected["id"])
+    except RuntimeError:
+        tools.note_decision("Selected candidate lacks an evidence clip", "stop",
+                            "The chat must not describe a candidate without its linked clip")
+        return {
+            "status": "evidence_incomplete",
+            "answer": "A candidate event exists, but its linked evidence clip is unavailable. "
+                      "No tactical conclusion is provided.",
+            "limitations": ["Evidence clip unavailable", "Candidate events and tracks are unverified"],
+            "evidence": {"events": [selected["id"]], "clips": [], "artifacts": {}},
+            "run": summary,
+        }
     artifacts, artifact_refs = _read_artifacts(tools._require_run())
     tools.note_external("read_evidence_artifacts", {
         "available": sorted(artifact_refs), "selectedZone": zone_id,

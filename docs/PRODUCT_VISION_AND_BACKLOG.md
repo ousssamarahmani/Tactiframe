@@ -20,7 +20,7 @@ The Mazzulla reference is workflow inspiration only: prepare, observe, compare e
 |---|---|---|
 | Commercial CV module | Detection, tracking, ball candidates, team labels, pitch calibration, and later multi-camera association | Single-camera baseline in progress; not commercially validated |
 | TactiFrame Vision Engine | Converts CV outputs into session artifacts, zones, candidate events, clips, heatmaps, matrices, and quality metadata | Sessions, candidate events, clips, and quality reports exist; heatmaps and matrices are next |
-| TactiFrame Agentic Vision | Video Analyst, Vision Agent, Tactical Analyst, evidence-bound chat, trace, and coach approval | Tool loop, trace, proposal, and approval exist; specialist-agent split and chat are planned |
+| TactiFrame Agentic Vision | Video Analyst, Vision Agent, Tactical Analyst, evidence-bound chat, trace, and coach approval | Tool loop, trace, proposal, approval, evidence-bound chat, and deterministic local specialist simulation exist; model-driven and distributed agents are later |
 | Football solution agents | Opposition Analyst, Performance Analyst, Match Room Agent, Match Analyst | Planned; they consume evidence and must not invent visual facts |
 
 ## Agent responsibilities
@@ -77,9 +77,9 @@ These are JSON evidence artifacts for tool use and API delivery. They are candid
 - [x] Add API-only evidence-bound Agent Vision Chat: a question triggers tools and returns event IDs, artifact references, browser-safe clip URLs, limitations, and trace steps.
 - [ ] Add the chat panel to the local Evidence Viewer after the API contract is tested on more sessions.
 - [x] Simulate Video Analyst, Vision Agent, and Tactical Analyst roles in one local process before any distributed deployment.
-- [ ] Run the chat and specialist simulations against additional fixed/synthetic sessions before enabling model-driven specialist prompts.
-- [ ] Test no-evidence, missing-clip, density-first, contest-first, heatmap, and matrix question scenarios.
-- [ ] Enforce that chat cannot draft a plan or imply approval without the existing evidence and human gate.
+- [x] Run the chat and specialist simulations against fixed/synthetic sessions before enabling model-driven specialist prompts.
+- [x] Test no-evidence, missing-clip, density-first, contest-first, heatmap, and matrix question scenarios.
+- [x] Enforce that chat cannot draft a plan or imply approval without the existing evidence and human gate.
 
 ### Later — production and advanced intelligence
 
