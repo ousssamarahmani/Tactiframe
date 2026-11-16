@@ -56,9 +56,9 @@ This is the maintained checklist after the first local MVP foundation. The histo
 - [x] Session evaluation harness, ball-candidate validation, track diagnostics, and deterministic simulation tests.
 - [x] Controlled A/B runner and comparator for one-setting tracking experiments.
 
-### In progress — current CV gate
+### Completed — current CV gate
 
-- [ ] Run the 5-second versus 8-second lost-track-buffer A/B session locally; inspect its annotated video and `tracking_ab_comparison.json` before accepting or rejecting the setting.
+- [x] Run the controlled 5-second versus 8-second lost-track-buffer A/B session, inspect the annotated output and comparison artifacts, and retain the 5-second baseline because the 8-second candidate increased ID churn. See [tracking A/B result](TRACKING_AB_RESULT.md).
 
 ### Completed — Agentic Vision evidence artifacts v1
 
@@ -94,7 +94,7 @@ These are JSON evidence artifacts for tool use and API delivery. They are candid
 
 ### Milestone 1 — measured single-camera Agentic Vision
 
-1. **Complete the controlled tracking A/B run.** Compare the 5-second and 8-second lost-track-buffer sessions with `evaluation.json`, `track_diagnostics.json`, and annotated-video review. Do not accept a setting without reviewing the same labeled player passages.
+1. **Keep the validated tracking baseline.** The 8-second lost-track buffer was rejected for this clip; later experiments must change one parameter at a time and compare against the retained 5-second baseline.
 2. **Generate evidence artifacts.** Produce deterministic candidate heatmaps, zone occupancy matrices, team-shape snapshots, and artifact metadata from tracks. Every artifact must carry its coordinate system and limitations.
 3. **Create an evidence API.** Serve events, clips, heatmaps, matrices, trace, plan, and quality data by session ID.
 4. **Build evidence-bound Agent Vision Chat.** A coach question must invoke tools, return clip/event/artifact references, update the trace, and refuse unsupported claims.
