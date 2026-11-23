@@ -19,7 +19,7 @@ The Mazzulla reference is workflow inspiration only: prepare, observe, compare e
 | Layer | Responsibility | Status |
 |---|---|---|
 | Commercial CV module | Detection, tracking, ball candidates, team labels, pitch calibration, and later multi-camera association | Single-camera baseline in progress; not commercially validated |
-| TactiFrame Vision Engine | Converts CV outputs into session artifacts, zones, candidate events, clips, heatmaps, matrices, and quality metadata | Sessions, candidate events, clips, and quality reports exist; heatmaps and matrices are next |
+| TactiFrame Vision Engine | Converts CV outputs into session artifacts, zones, candidate events, clips, heatmaps, matrices, and quality metadata | Sessions, candidate events, clips, heatmaps, matrices, and baseline quality reports exist; the next gap is a versioned quality contract |
 | TactiFrame Agentic Vision | Video Analyst, Vision Agent, Tactical Analyst, evidence-bound chat, trace, and coach approval | Tool loop, trace, proposal, approval, evidence-bound chat, and deterministic local specialist simulation exist; model-driven and distributed agents are later |
 | Football solution agents | Opposition Analyst, Performance Analyst, Match Room Agent, Match Analyst | Planned; they consume evidence and must not invent visual facts |
 
@@ -44,7 +44,7 @@ An agent must cite session IDs, event IDs, artifact IDs, and evidence clips for 
 
 ## Current task list — source of truth
 
-This is the maintained checklist after the first local MVP foundation. The historical hackathon checklist is not the current implementation status.
+This is the maintained checklist for the TactiFrame MVP. The historical hackathon checklist is retained only as implementation history; it is not the product roadmap or current implementation status.
 
 ### Completed foundation
 
@@ -59,6 +59,17 @@ This is the maintained checklist after the first local MVP foundation. The histo
 ### Completed — current CV gate
 
 - [x] Run the controlled 5-second versus 8-second lost-track-buffer A/B session, inspect the annotated output and comparison artifacts, and retain the 5-second baseline because the 8-second candidate increased ID churn. See [tracking A/B result](TRACKING_AB_RESULT.md).
+
+### Now — commercial-CV to Agentic-Vision quality contract
+
+The commercial CV Engine remains a separate producer of observations. TactiFrame consumes its evidence and quality state; it does not make a language model authoritative for positions, distances, or tactical facts.
+
+- [ ] Define a versioned CV run/quality schema: input hash, code/model/container versions, coordinate system, calibration quality, confidence, interpolation/missing-state markers, and limitations.
+- [ ] Emit a session-level `quality.json` from the observation pipeline without removing existing `run.json` compatibility.
+- [ ] Add Video Agent routing: poor pitch coverage, camera quality, or calibration must select clip review or stop rather than spatial analysis.
+- [ ] Add Vision Agent routing: insufficient track/ball quality must suppress possession, movement, or pressure-style claims.
+- [ ] Add deterministic tests proving that quality fields change the next evidence tool and prevent unsupported claims.
+- [ ] Document a CV model bill of materials and license decision before using any weights in a commercial pilot.
 
 ### Completed — Agentic Vision evidence artifacts v1
 
@@ -81,32 +92,35 @@ These are JSON evidence artifacts for tool use and API delivery. They are candid
 - [x] Test no-evidence, missing-clip, density-first, contest-first, heatmap, and matrix question scenarios.
 - [x] Enforce that chat cannot draft a plan or imply approval without the existing evidence and human gate.
 
-### Later — production and advanced intelligence
+### Next — deployable batch MVP
 
-- [ ] Async EC2 GPU worker, S3-backed jobs, authenticated FastAPI, monitoring, retention, and cost controls.
-- [ ] Bedrock AgentCore deployment for the lead agent after specialist-agent contracts are stable.
-- [ ] MCP wrapper for the stable evidence tools; A2A only after agents are independent services.
-- [ ] Labeled evaluation for calibrated pitch coordinates, team identity, ball/possession/pass candidates, pressure, compactness, and shape analytics.
+- [ ] Define S3-backed job/session contracts, private raw/processed/archive prefixes, run idempotency, and retention policies.
+- [ ] Build Docker/ECR images and a Step Functions + SQS + AWS Batch GPU job flow for full-match CV processing.
+- [ ] Keep FastAPI as the product boundary; add authenticated session/job APIs, CloudWatch logs, structured progress, retries, and cost controls.
+- [ ] Add an MCP wrapper for the stable evidence tools; A2A only after agents are independent services.
+- [ ] Deploy the lead Agentic Vision orchestrator to Bedrock AgentCore after cloud session/tool contracts are stable.
+- [ ] Build labeled evaluation for calibrated pitch coordinates, team identity, ball/possession/pass candidates, pressure, compactness, and shape analytics.
+
+### Later — advanced intelligence
 - [ ] Multi-camera synchronization and cross-camera association with labeled evaluation.
 - [ ] Evidence graph/RAG, NVIDIA VSS/Cosmos evaluation, and private club pilots with written footage/data agreements.
 
 ## Implementation plan
 
-### Milestone 1 — measured single-camera Agentic Vision
+### Milestone 1 — quality-gated single-camera Agentic Vision
 
 1. **Keep the validated tracking baseline.** The 8-second lost-track buffer was rejected for this clip; later experiments must change one parameter at a time and compare against the retained 5-second baseline.
-2. **Generate evidence artifacts.** Produce deterministic candidate heatmaps, zone occupancy matrices, team-shape snapshots, and artifact metadata from tracks. Every artifact must carry its coordinate system and limitations.
-3. **Create an evidence API.** Serve events, clips, heatmaps, matrices, trace, plan, and quality data by session ID.
-4. **Build evidence-bound Agent Vision Chat.** A coach question must invoke tools, return clip/event/artifact references, update the trace, and refuse unsupported claims.
-5. **Simulate and test the agents.** Use deterministic sessions for missing evidence, no events, density-first, contest-first, and known heatmap/matrix expectations.
+2. **Publish a CV quality contract.** Version calibration, detection, tracking, ball, and evidence-quality state; distinguish raw, interpolated, missing, candidate, and rejected observations.
+3. **Make agents quality-gated.** Video and Vision agents must change the next tool from those fields and abstain when the evidence does not support a claim.
+4. **Preserve evidence artifacts and API delivery.** Heatmaps, matrices, session metadata, clips, trace, and plan remain candidate/unverified until supported by the quality contract.
 
-### Milestone 2 — deployable MVP
+### Milestone 2 — deployable batch MVP
 
-1. Run OpenCV and football model inference asynchronously on an EC2 GPU worker with private S3 session storage.
-2. Keep FastAPI as the product boundary; add jobs, session status, authentication, structured logs, and retention controls.
-3. Deploy the lead orchestration agent to Bedrock AgentCore only after the local specialist-agent contract is stable.
+1. Run containerized OpenCV and football-model inference asynchronously in an AWS Batch GPU job with private S3 session storage.
+2. Orchestrate validation, retries, and publication with Step Functions and SQS; keep every run idempotent and auditable.
+3. Keep FastAPI as the product boundary; add jobs, session status, authentication, structured logs, retention controls, and private playback URLs.
 4. Add observability, evaluation datasets, cost limits, retry policies, and human-approval audit records.
-5. Build a minimal evidence-review workspace only after the API and chat contract are tested.
+5. Deploy the lead orchestration agent to Bedrock AgentCore only after the cloud tool/session contract is stable; add MCP first, A2A later if independent agents require it.
 
 ### Milestone 3 — advanced Vision Engine
 
